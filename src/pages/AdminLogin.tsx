@@ -42,9 +42,9 @@ export default function AdminLogin() {
       >
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-6">
-            <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-12 w-auto object-contain" />
-            <div className="h-8 w-px bg-slate-200"></div>
             <img src="/science_society_logo.png" alt="Science Society" className="h-10 w-auto object-contain" />
+            <div className="h-8 w-px bg-slate-200"></div>
+            <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-12 w-auto object-contain" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Admin Portal</h2>
           <p className="text-slate-500 mt-2">Sign in to view recruitment applications</p>

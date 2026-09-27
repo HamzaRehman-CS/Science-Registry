@@ -104,7 +104,6 @@ export default function AdminDashboard() {
     if (applications.length === 0) return;
     const headers = [
       'Applicant Name', 
-      'CNIC', 
       'Registration Number', 
       'Department', 
       'Program', 
@@ -118,7 +117,6 @@ export default function AdminDashboard() {
       'Personal Email Address',
       'Province / Area',
       'City',
-      'Street / Hostel Address',
       'Why Join Science Society',
       'Biggest Motivation',
       'Competitions Participation',
@@ -144,7 +142,6 @@ export default function AdminDashboard() {
 
     const rows = applications.map(app => {
       const answers = app.answers || {};
-      const cnic = answers['CNIC / B-Form Number'] || answers['2. CNIC / B-Form Number'] || answers._cnic || '';
       const email = answers['Personal Email Address'] || answers['Email address'] || answers['3. Email address'] || answers._email || '';
       const phone = answers['Phone Number / WhatsApp'] || answers['4. Phone number / WhatsApp'] || answers._phone || '';
       const dept = answers['Department'] || answers['6. Department'] || answers._department || app.department || '';
@@ -153,7 +150,6 @@ export default function AdminDashboard() {
       const dob = answers['Date of birth'] || '';
       const province = answers['Province / Region'] || answers._province || '';
       const city = answers['City'] || answers._city || '';
-      const streetAddress = answers['Street / Hostel Address'] || answers._streetAddress || '';
       const secondTeam = answers['What is your second-choice team?'] || '';
       const skillLevel = answers['What is your skill level in this domain?'] || '';
       const whyJoin = answers['Why do you want to join the PAF-IAST Science Society?'] || '';
@@ -187,7 +183,6 @@ export default function AdminDashboard() {
 
       return [
         sanitize(app.applicant_name),
-        sanitize(cnic),
         sanitize(app.registration_number),
         sanitize(dept),
         sanitize(prog),
@@ -201,7 +196,6 @@ export default function AdminDashboard() {
         sanitize(email),
         sanitize(province),
         sanitize(city),
-        sanitize(streetAddress),
         sanitize(whyJoin),
         sanitize(motivation),
         sanitize(comp),
@@ -253,9 +247,9 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-3">
-              <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-9 w-auto object-contain" />
+              <img src="/science_society_logo.png" alt="Science Society" className="h-8 w-auto object-contain" />
               <div className="h-6 w-px bg-slate-200"></div>
-              <img src="/science_society_logo.png" alt="Science Society" className="h-8 w-auto object-contain hidden sm:block" />
+              <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-9 w-auto object-contain hidden sm:block" />
               <span className="text-lg font-bold text-slate-900 border-l border-slate-200 pl-3 ml-1">Admin Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
@@ -558,7 +552,6 @@ export default function AdminDashboard() {
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {(() => {
                   const answers = selectedApp.answers || {};
-                  const cnic = answers['CNIC / B-Form Number'] || answers['2. CNIC / B-Form Number'] || answers._cnic || 'N/A';
                   const email = answers['Personal Email Address'] || answers['Email address'] || answers['3. Email address'] || answers._email || 'N/A';
                   const phone = answers['Phone Number / WhatsApp'] || answers['4. Phone number / WhatsApp'] || answers._phone || 'N/A';
                   const dept = answers['Department'] || answers['6. Department'] || answers._department || selectedApp.department || 'N/A';
@@ -567,13 +560,11 @@ export default function AdminDashboard() {
                   const dob = answers['Date of birth'] || 'N/A';
                   const province = answers['Province / Region'] || answers._province || 'N/A';
                   const city = answers['City'] || answers._city || 'N/A';
-                  const streetAddress = answers['Street / Hostel Address'] || answers._streetAddress || 'N/A';
                   const secondChoiceTeam = answers['What is your second-choice team?'] || 'N/A';
                   const skillLevel = answers['What is your skill level in this domain?'] || 'N/A';
 
                   const knownKeys = new Set([
                     'Your full name', 'Full Name',
-                    'CNIC / B-Form Number', '2. CNIC / B-Form Number',
                     'Registration Number',
                     'Department', '6. Department',
                     'Degree / Program', '7. Degree / Program',
@@ -584,7 +575,6 @@ export default function AdminDashboard() {
                     'Phone Number / WhatsApp', '4. Phone number / WhatsApp',
                     'Province / Region', 'Province',
                     'City',
-                    'Street / Hostel Address',
                     'Why do you want to join the PAF-IAST Science Society?',
                     'What is your biggest motivation to join the society?',
                     'Would you be able to participate in competitions/tournaments?',
@@ -680,7 +670,6 @@ export default function AdminDashboard() {
                       <AdminSectionCard icon={User} title="Personal Details">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <DetailTile label="Full Name" value={selectedApp.applicant_name || answers['Your full name']} />
-                          <DetailTile label="CNIC / B-Form Number" value={cnic} />
                           <DetailTile label="Registration Number" value={selectedApp.registration_number || answers['Registration Number']} />
                           <DetailTile label="Department" value={dept} />
                           <DetailTile label="Degree / Program" value={prog} />
@@ -691,7 +680,6 @@ export default function AdminDashboard() {
                           <DetailTile label="Phone / WhatsApp" value={phone} isPhone={true} />
                           <DetailTile label="Province / Territory" value={province} />
                           <DetailTile label="City" value={city} />
-                          <DetailTile label="Street / Hostel Address" value={streetAddress} colSpan={2} />
                         </div>
                       </AdminSectionCard>
 

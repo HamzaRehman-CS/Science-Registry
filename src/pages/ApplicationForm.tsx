@@ -135,14 +135,12 @@ export default function ApplicationForm() {
 
     try {
       const applicantName = formData['Your full name'];
-      const cnic = formData['CNIC / B-Form Number'];
       const regNo = formData['Registration Number'];
       const department = formData['Department'];
       const program = formData['Degree / Program'];
       const semester = formData['Semester'];
       const province = formData['Province / Region'];
       const city = formData['City'];
-      const streetAddress = formData['Street / Hostel Address'];
       const rawPhone = (formData['Phone Number / WhatsApp'] || '').trim().replace(/^\+?92\s*/, '');
       const fullPhone = rawPhone ? `+92 ${rawPhone}` : '';
       const email = formData['Personal Email Address'] || formData['Email address'] || '';
@@ -161,12 +159,10 @@ export default function ApplicationForm() {
               ...formData,
               'Personal Email Address': email,
               'Phone Number / WhatsApp': fullPhone,
-              _cnic: cnic,
               _department: department,
               _program: program,
               _province: province,
               _city: city,
-              _streetAddress: streetAddress,
               _phone: fullPhone,
               _email: email
             }
@@ -200,9 +196,9 @@ export default function ApplicationForm() {
           className="max-w-md w-full bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 text-center shadow-xl"
         >
           <div className="flex items-center justify-center gap-4 mb-6">
-            <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-14 w-auto object-contain" />
-            <div className="h-10 w-px bg-slate-200"></div>
             <img src="/science_society_logo.png" alt="Science Society" className="h-12 w-auto object-contain" />
+            <div className="h-10 w-px bg-slate-200"></div>
+            <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-14 w-auto object-contain" />
           </div>
           <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-xs">
             <CheckCircle2 className="w-9 h-9" />
@@ -237,16 +233,16 @@ export default function ApplicationForm() {
           <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 sm:px-10 py-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center">
               <img 
-                src="/paf_iast_logo.png" 
-                alt="PAF-IAST University Logo" 
+                src="/science_society_logo.png" 
+                alt="PAF-IAST Science Society Logo" 
                 className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm" 
               />
             </div>
             <div className="hidden sm:block h-14 w-px bg-slate-200"></div>
             <div className="flex items-center">
               <img 
-                src="/science_society_logo.png" 
-                alt="PAF-IAST Science Society Logo" 
+                src="/paf_iast_logo.png" 
+                alt="PAF-IAST University Logo" 
                 className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm" 
               />
             </div>
@@ -282,14 +278,6 @@ export default function ApplicationForm() {
               value={formData} 
               onChange={handleChange} 
               placeholder="e.g. Muhammad Ali" 
-              required 
-            />
-
-            <TextInput 
-              name="CNIC / B-Form Number" 
-              value={formData} 
-              onChange={handleChange} 
-              placeholder="e.g. 13101-1234567-1 (13 digits)" 
               required 
             />
 
@@ -361,7 +349,7 @@ export default function ApplicationForm() {
             {/* Residential Location & Province / Special Areas */}
             <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-5">
               <div className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-                <span>Residential Location & Address</span>
+                <span>Residential Location</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -399,20 +387,6 @@ export default function ApplicationForm() {
                 </div>
               </div>
 
-              {/* Complete Street Address */}
-              <div>
-                <label className="block text-[14px] font-medium text-slate-700 mb-1.5">
-                  Complete Street / Hostel Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData['Street / Hostel Address'] || ''}
-                  onChange={(e) => handleChange('Street / Hostel Address', e.target.value)}
-                  required
-                  placeholder="e.g. House No. 42, Street 3, Sector B, or PAF-IAST Boys/Girls Hostel Room 12"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none"
-                />
-              </div>
             </div>
 
             <RadioGroup 
