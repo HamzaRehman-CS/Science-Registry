@@ -1,19 +1,52 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Search, LogOut, FileText, ChevronRight, X, Calendar, User, BookOpen } from 'lucide-react';
+import { 
+  Search, 
+  LogOut, 
+  FileText, 
+  ChevronRight, 
+  X, 
+  Calendar, 
+  User, 
+  BookOpen, 
+  Trash2, 
+  AlertTriangle, 
+  Download, 
+  Filter,
+  CheckCircle2
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const TEAMS = [
+  "All Teams",
+  "Event Management",
+  "Media & Content",
+  "Decor & Arts",
+  "Public Relations (PR)",
+  "Content & Editorial",
+  "General Secretary",
+  "Vice President ( male )"
+];
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('All Teams');
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
+  
+  // Deletion state
+  const [appToDelete, setAppToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApplications();
   }, []);
 
   const fetchApplications = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('applications')
       .select('*')
@@ -29,19 +62,77 @@ export default function AdminDashboard() {
     await supabase.auth.signOut();
   };
 
+  const handleDeleteApplication = async (id: string) => {
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      setApplications(prev => prev.filter(app => app.id !== id));
+      if (selectedApp?.id === id) {
+        setSelectedApp(null);
+      }
+      setAppToDelete(null);
+      setActionSuccess('Application deleted successfully.');
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setDeleteError(
+        err.message || 
+        'Failed to delete application. Please check your Supabase Row-Level Security policies.'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    if (applications.length === 0) return;
+    const headers = ['Applicant Name', 'Registration Number', 'Department', 'Semester', 'Applied Position', 'Submission Date'];
+    const rows = applications.map(app => [
+      `"${(app.applicant_name || '').replace(/"/g, '""')}"`,
+      `"${(app.registration_number || '').replace(/"/g, '""')}"`,
+      `"${(app.department || '').replace(/"/g, '""')}"`,
+      `"${(app.semester || '').replace(/"/g, '""')}"`,
+      `"${(app.applied_position || '').replace(/"/g, '""')}"`,
+      `"${new Date(app.created_at).toLocaleString()}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Science_Society_Applications_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredApps = applications.filter(app => {
     const term = search.toLowerCase();
-    return (
+    const matchesSearch = 
       (app.applicant_name && app.applicant_name.toLowerCase().includes(term)) ||
       (app.registration_number && app.registration_number.toLowerCase().includes(term)) ||
-      (app.applied_position && app.applied_position.toLowerCase().includes(term))
-    );
+      (app.applied_position && app.applied_position.toLowerCase().includes(term)) ||
+      (app.department && app.department.toLowerCase().includes(term));
+
+    const matchesTeam = selectedTeam === 'All Teams' || app.applied_position === selectedTeam;
+
+    return matchesSearch && matchesTeam;
   });
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Navbar */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-3">
@@ -52,7 +143,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 PAFSS26
               </div>
               <button
@@ -67,28 +158,80 @@ export default function AdminDashboard() {
         </div>
       </nav>
 
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        
+        {/* Success Alert */}
+        <AnimatePresence>
+          {actionSuccess && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-sm shadow-sm"
+            >
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span className="font-medium">{actionSuccess}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header with Search and Filters */}
+        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Student Applications</h1>
-            <p className="text-sm text-slate-500 mt-1">View all submitted recruitment applications.</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Showing <span className="font-semibold text-slate-800">{filteredApps.length}</span> of <span className="font-semibold text-slate-800">{applications.length}</span> total applicant records.
+            </p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-5 h-5" />
+
+          {/* Action Toolbar */}
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Team Filter */}
+            <div className="relative flex-1 sm:flex-initial">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Filter className="w-4 h-4" />
+              </div>
+              <select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                className="block w-full sm:w-48 pl-9 pr-8 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0056A8] focus:border-[#0056A8] bg-white text-sm font-medium text-slate-700 cursor-pointer"
+              >
+                {TEAMS.map(team => (
+                  <option key={team} value={team}>{team}</option>
+                ))}
+              </select>
             </div>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, reg no, or position..."
-              className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-brand-blue bg-white text-sm"
-            />
+
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-64">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name, reg no, dept..."
+                className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0056A8] focus:border-[#0056A8] bg-white text-sm"
+              />
+            </div>
+
+            {/* CSV Export Button */}
+            <button
+              onClick={exportToCSV}
+              disabled={applications.length === 0}
+              className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors shadow-xs disabled:opacity-50"
+              title="Download all applications as an Excel/CSV spreadsheet"
+            >
+              <Download className="w-4 h-4 mr-1.5" />
+              Export CSV
+            </button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        {/* Applications Table */}
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
@@ -96,20 +239,27 @@ export default function AdminDashboard() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Applicant</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Registration</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Position</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Applied Position</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 relative"><span className="sr-only">View</span></th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading applications...</td>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-6 h-6 border-2 border-[#0056A8] border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm">Loading applications...</span>
+                      </div>
+                    </td>
                   </tr>
                 ) : filteredApps.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                      {search ? "No matching applications found." : "No applications have been submitted yet."}
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                      {search || selectedTeam !== 'All Teams' 
+                        ? "No matching applications found with the current filters." 
+                        : "No student applications have been submitted yet."}
                     </td>
                   </tr>
                 ) : (
@@ -121,22 +271,24 @@ export default function AdminDashboard() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue font-bold text-sm">
-                            {app.applicant_name?.charAt(0) || '?'}
+                          <div className="h-9 w-9 rounded-full bg-blue-50 text-[#0056A8] flex items-center justify-center font-bold text-sm border border-blue-100">
+                            {app.applicant_name?.charAt(0)?.toUpperCase() || '?'}
                           </div>
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-slate-900">{app.applicant_name}</div>
+                            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#0056A8] transition-colors">
+                              {app.applicant_name}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-600">
                         {app.registration_number}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                         {app.department}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-brand-blue border border-blue-100">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-[#0056A8] border border-blue-100">
                           {app.applied_position}
                         </span>
                       </td>
@@ -144,9 +296,22 @@ export default function AdminDashboard() {
                         {new Date(app.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <span className="text-brand-blue group-hover:text-brand-blue/80 flex items-center justify-end">
-                          View <ChevronRight className="w-4 h-4 ml-1" />
-                        </span>
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setSelectedApp(app)}
+                            className="p-1.5 text-slate-500 hover:text-[#0056A8] hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View Application Details"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => setAppToDelete(app)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete / Reject Record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -157,7 +322,80 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Modal / Slider for details */}
+      {/* Confirmation Modal for Deletion / Rejection */}
+      <AnimatePresence>
+        {appToDelete && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !deleting && setAppToDelete(null)}
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  Delete / Reject Application?
+                </h3>
+                
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  Are you sure you want to permanently delete the application record for <strong className="text-slate-900">{appToDelete.applicant_name}</strong> (<span className="text-slate-700">{appToDelete.registration_number}</span>)?
+                </p>
+
+                {deleteError && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100">
+                    {deleteError}
+                  </div>
+                )}
+
+                <div className="flex gap-3 justify-end mt-6">
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={() => {
+                      setAppToDelete(null);
+                      setDeleteError(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={() => handleDeleteApplication(appToDelete.id)}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {deleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Yes, Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Slide-out details drawer */}
       <AnimatePresence>
         {selectedApp && (
           <>
@@ -166,7 +404,7 @@ export default function AdminDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedApp(null)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40"
             />
             <motion.div 
               initial={{ x: '100%' }}
@@ -175,64 +413,77 @@ export default function AdminDashboard() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 right-0 w-full max-w-2xl bg-white shadow-2xl z-50 flex flex-col"
             >
+              {/* Drawer Header */}
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-brand-blue" />
+                  <FileText className="w-5 h-5 mr-2 text-[#0056A8]" />
                   Application Details
                 </h2>
-                <button 
-                  onClick={() => setSelectedApp(null)}
-                  className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAppToDelete(selectedApp)}
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                    title="Delete Application"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Delete
+                  </button>
+                  <button 
+                    onClick={() => setSelectedApp(null)}
+                    className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
+              {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto p-6">
                 
                 <div className="mb-8">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="h-16 w-16 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue font-bold text-2xl">
-                      {selectedApp.applicant_name?.charAt(0) || '?'}
+                    <div className="h-16 w-16 rounded-2xl bg-blue-50 text-[#0056A8] flex items-center justify-center font-bold text-2xl border border-blue-100 shadow-xs">
+                      {selectedApp.applicant_name?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-slate-900">{selectedApp.applicant_name}</h3>
-                      <div className="inline-flex items-center mt-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-brand-blue border border-blue-100">
+                      <div className="inline-flex items-center mt-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-[#0056A8] border border-blue-100">
                         {selectedApp.applied_position}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-sm"><User className="w-4 h-4 mr-1.5" /> Registration No</div>
-                      <div className="font-medium text-slate-900">{selectedApp.registration_number}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><User className="w-3.5 h-3.5 mr-1.5" /> Registration No</div>
+                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.registration_number}</div>
                     </div>
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-sm"><BookOpen className="w-4 h-4 mr-1.5" /> Department</div>
-                      <div className="font-medium text-slate-900">{selectedApp.department}</div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><BookOpen className="w-3.5 h-3.5 mr-1.5" /> Department</div>
+                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.department}</div>
                     </div>
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-sm"><Calendar className="w-4 h-4 mr-1.5" /> Semester</div>
-                      <div className="font-medium text-slate-900">{selectedApp.semester}</div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><Calendar className="w-3.5 h-3.5 mr-1.5" /> Semester</div>
+                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.semester}</div>
                     </div>
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-sm"><Calendar className="w-4 h-4 mr-1.5" /> Applied On</div>
-                      <div className="font-medium text-slate-900">{new Date(selectedApp.created_at).toLocaleString()}</div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><Calendar className="w-3.5 h-3.5 mr-1.5" /> Applied On</div>
+                      <div className="font-semibold text-slate-900 text-sm">{new Date(selectedApp.created_at).toLocaleString()}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-6 relative">
-                  <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-200 ml-3"></div>
+                <div className="space-y-5 relative">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Form Questions & Answers</h4>
+                  <div className="absolute left-0 top-7 bottom-0 w-px bg-slate-200 ml-3"></div>
                   
                   {selectedApp.answers && Object.entries(selectedApp.answers).map(([question, answer]: [string, any], index) => (
-                    <div key={index} className="relative pl-10">
-                      <div className="absolute left-0 w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-400">
+                    <div key={index} className="relative pl-9">
+                      <div className="absolute left-0 w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-xs">
                         {index + 1}
                       </div>
-                      <h4 className="text-sm font-medium text-slate-900 mb-1.5">{question}</h4>
-                      <div className="text-slate-600 bg-white border border-slate-100 rounded-lg p-3 text-sm">
+                      <h5 className="text-xs font-semibold text-slate-800 mb-1">{question}</h5>
+                      <div className="text-slate-600 bg-white border border-slate-100 rounded-xl p-3 text-sm shadow-2xs">
                         {Array.isArray(answer) ? (
                           answer.length > 0 ? (
                             <ul className="list-disc list-inside space-y-1">
@@ -247,6 +498,17 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Bottom Delete Button inside drawer */}
+                <div className="mt-10 pt-6 border-t border-slate-200">
+                  <button
+                    onClick={() => setAppToDelete(selectedApp)}
+                    className="w-full py-3 px-4 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete / Reject This Application
+                  </button>
                 </div>
 
               </div>

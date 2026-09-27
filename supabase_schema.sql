@@ -25,4 +25,8 @@ CREATE POLICY "Allow authenticated read" ON applications
     TO authenticated
     USING (true);
 
--- Note: No UPDATE or DELETE policies. Applications are immutable.
+-- 5. Policy: Authenticated admin can delete/reject applications
+CREATE POLICY "Allow authenticated delete" ON applications
+    FOR DELETE 
+    TO authenticated
+    USING (true);
