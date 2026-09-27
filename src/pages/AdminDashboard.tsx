@@ -6,14 +6,20 @@ import {
   FileText, 
   ChevronRight, 
   X, 
-  Calendar, 
   User, 
-  BookOpen, 
   Trash2, 
   AlertTriangle, 
   Download, 
   Filter,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  ShieldCheck,
+  Briefcase,
+  Layers,
+  Sparkles,
+  Mail,
+  Clock,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -103,30 +109,76 @@ export default function AdminDashboard() {
       'Department', 
       'Program', 
       'Semester', 
+      'Gender',
+      'Date of Birth',
       'Applied Position', 
+      'Second Choice Team',
+      'Skill Level',
       'Phone Number', 
-      'Email Address',
+      'Personal Email Address',
       'Province / Area',
       'City',
       'Street / Hostel Address',
+      'Why Join Science Society',
+      'Biggest Motivation',
+      'Competitions Participation',
+      'Travel Availability',
+      'Meetings & Deadlines Commitment',
+      'Member of Other Society',
+      'Other Society Details',
+      'Detailed Prior Experience',
+      'Awards / Certificates',
+      'Subdomain Experience / Sample',
+      'Portfolio Link',
+      'Consent Declaration',
       'Submission Date'
     ];
 
-    const sanitize = (val: string | null | undefined) => {
-      const clean = (val || '').toString().replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, ' ').trim();
+    const sanitize = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      let str = Array.isArray(val) ? val.join('; ') : String(val);
+      const clean = str.replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, ' ').trim();
       return `"${clean}"`;
     };
 
     const rows = applications.map(app => {
       const answers = app.answers || {};
       const cnic = answers['CNIC / B-Form Number'] || answers['2. CNIC / B-Form Number'] || answers._cnic || '';
-      const email = answers['Email address'] || answers['3. Email address'] || answers['2. Email address'] || '';
+      const email = answers['Personal Email Address'] || answers['Email address'] || answers['3. Email address'] || answers._email || '';
       const phone = answers['Phone Number / WhatsApp'] || answers['4. Phone number / WhatsApp'] || answers._phone || '';
       const dept = answers['Department'] || answers['6. Department'] || answers._department || app.department || '';
       const prog = answers['Degree / Program'] || answers['7. Degree / Program'] || answers._program || '';
+      const gender = answers['What gender do you identify as?'] || answers['Gender'] || '';
+      const dob = answers['Date of birth'] || '';
       const province = answers['Province / Region'] || answers._province || '';
       const city = answers['City'] || answers._city || '';
       const streetAddress = answers['Street / Hostel Address'] || answers._streetAddress || '';
+      const secondTeam = answers['What is your second-choice team?'] || '';
+      const skillLevel = answers['What is your skill level in this domain?'] || '';
+      const whyJoin = answers['Why do you want to join the PAF-IAST Science Society?'] || '';
+      const motivation = answers['What is your biggest motivation to join the society?'] || '';
+      const comp = answers['Would you be able to participate in competitions/tournaments?'] || '';
+      const travel = answers['Would you be able to travel for group events?'] || '';
+      const attend = answers['Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?'] || '';
+      const isOtherSociety = answers['Are you currently a member of any other university society/organization?'] || '';
+      const otherSocietyRole = answers['Which society/organization and what is your role?'] || '';
+      const priorExp = answers['Detailed prior experience related to the position/team:'] || '';
+      const awards = answers["Please share details if you've received any awards or certificates for this:"] || '';
+      
+      const subdomainExp = 
+        answers['Event Management Prior Experience:'] ||
+        answers['Decor & Arts Prior Experience:'] ||
+        answers['Media & Content Prior Experience:'] ||
+        answers['Public Relations Prior Experience:'] ||
+        answers['Writing & Editorial Prior Experience / Sample:'] ||
+        answers['Leadership & Management Prior Experience:'] || '';
+
+      const portfolio = 
+        answers['Link to your previous work / portfolio (Drive/Instagram):'] ||
+        answers['Portfolio / Social Media link (Behance/Drive/Insta):'] || '';
+
+      const consent = answers['Consent Declaration: I agree to the terms, recruitment evaluation, and consent to my data being processed.'] || 
+        answers['Declaration: I confirm that all the information provided is accurate and true.'] || 'Agreed';
 
       return [
         sanitize(app.applicant_name),
@@ -135,12 +187,28 @@ export default function AdminDashboard() {
         sanitize(dept),
         sanitize(prog),
         sanitize(app.semester),
+        sanitize(gender),
+        sanitize(dob),
         sanitize(app.applied_position),
+        sanitize(secondTeam),
+        sanitize(skillLevel),
         sanitize(phone),
         sanitize(email),
         sanitize(province),
         sanitize(city),
         sanitize(streetAddress),
+        sanitize(whyJoin),
+        sanitize(motivation),
+        sanitize(comp),
+        sanitize(travel),
+        sanitize(attend),
+        sanitize(isOtherSociety),
+        sanitize(otherSocietyRole),
+        sanitize(priorExp),
+        sanitize(awards),
+        sanitize(subdomainExp),
+        sanitize(portfolio),
+        sanitize(consent),
         sanitize(new Date(app.created_at).toLocaleString())
       ];
     });
@@ -479,99 +547,400 @@ export default function AdminDashboard() {
               </div>
 
               {/* Drawer Body */}
-              <div className="flex-1 overflow-y-auto p-6">
-                
-                <div className="mb-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="h-16 w-16 rounded-2xl bg-blue-50 text-[#0056A8] flex items-center justify-center font-bold text-2xl border border-blue-100 shadow-xs">
-                      {selectedApp.applicant_name?.charAt(0)?.toUpperCase() || '?'}
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-slate-900">{selectedApp.applicant_name}</h3>
-                      <div className="inline-flex items-center mt-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-[#0056A8] border border-blue-100">
-                        {selectedApp.applied_position}
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {(() => {
+                  const answers = selectedApp.answers || {};
+                  const cnic = answers['CNIC / B-Form Number'] || answers['2. CNIC / B-Form Number'] || answers._cnic || 'N/A';
+                  const email = answers['Personal Email Address'] || answers['Email address'] || answers['3. Email address'] || answers._email || 'N/A';
+                  const phone = answers['Phone Number / WhatsApp'] || answers['4. Phone number / WhatsApp'] || answers._phone || 'N/A';
+                  const dept = answers['Department'] || answers['6. Department'] || answers._department || selectedApp.department || 'N/A';
+                  const prog = answers['Degree / Program'] || answers['7. Degree / Program'] || answers._program || 'N/A';
+                  const gender = answers['What gender do you identify as?'] || answers['Gender'] || 'N/A';
+                  const dob = answers['Date of birth'] || 'N/A';
+                  const province = answers['Province / Region'] || answers._province || 'N/A';
+                  const city = answers['City'] || answers._city || 'N/A';
+                  const streetAddress = answers['Street / Hostel Address'] || answers._streetAddress || 'N/A';
+                  const secondChoiceTeam = answers['What is your second-choice team?'] || 'N/A';
+                  const skillLevel = answers['What is your skill level in this domain?'] || 'N/A';
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><User className="w-3.5 h-3.5 mr-1.5" /> Registration No</div>
-                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.registration_number}</div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><User className="w-3.5 h-3.5 mr-1.5" /> CNIC / B-Form</div>
-                      <div className="font-semibold text-slate-900 text-sm">
-                        {selectedApp.answers?.['2. CNIC / B-Form Number'] || selectedApp.answers?._cnic || 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><BookOpen className="w-3.5 h-3.5 mr-1.5" /> Department / Program</div>
-                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.department}</div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><Calendar className="w-3.5 h-3.5 mr-1.5" /> Semester</div>
-                      <div className="font-semibold text-slate-900 text-sm">{selectedApp.semester}</div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Email Address</div>
-                      <div className="font-semibold text-slate-900 text-xs truncate">
-                        {selectedApp.answers?.['3. Email address'] || selectedApp.answers?.['2. Email address'] || 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Phone / WhatsApp</div>
-                      <div className="font-semibold text-slate-900 text-xs">
-                        {selectedApp.answers?.['Phone Number / WhatsApp'] || selectedApp.answers?.['4. Phone number / WhatsApp'] || selectedApp.answers?._phone || 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Province & City</div>
-                      <div className="font-semibold text-slate-900 text-xs">
-                        {selectedApp.answers?.['City'] || selectedApp.answers?._city || ''}{selectedApp.answers?.['Province / Region'] || selectedApp.answers?._province ? `, ${selectedApp.answers?.['Province / Region'] || selectedApp.answers?._province}` : 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50 col-span-2">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Street / Hostel Address</div>
-                      <div className="font-semibold text-slate-900 text-xs">
-                        {selectedApp.answers?.['Street / Hostel Address'] || selectedApp.answers?._streetAddress || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  const knownKeys = new Set([
+                    'Your full name', 'Full Name',
+                    'CNIC / B-Form Number', '2. CNIC / B-Form Number',
+                    'Registration Number',
+                    'Department', '6. Department',
+                    'Degree / Program', '7. Degree / Program',
+                    'Semester',
+                    'What gender do you identify as?', 'Gender',
+                    'Date of birth',
+                    'Personal Email Address', 'Email address', '3. Email address',
+                    'Phone Number / WhatsApp', '4. Phone number / WhatsApp',
+                    'Province / Region', 'Province',
+                    'City',
+                    'Street / Hostel Address',
+                    'Why do you want to join the PAF-IAST Science Society?',
+                    'What is your biggest motivation to join the society?',
+                    'Would you be able to participate in competitions/tournaments?',
+                    'Would you be able to travel for group events?',
+                    'Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?',
+                    'Are you currently a member of any other university society/organization?',
+                    'Which society/organization and what is your role?',
+                    "Is there anything else you'd like us to know about you?",
+                    'Which team are you registering for?',
+                    'What is your second-choice team?',
+                    'What is your skill level in this domain?',
+                    'Detailed prior experience related to the position/team:',
+                    "Please share details if you've received any awards or certificates for this:",
+                    'Which aspects of event management interest you?',
+                    'Event Management Prior Experience:',
+                    'What skills do you have?',
+                    'Decor & Arts Prior Experience:',
+                    'Link to your previous work / portfolio (Drive/Instagram):',
+                    'What tools/software are you comfortable using?',
+                    'Media & Content Prior Experience:',
+                    'Portfolio / Social Media link (Behance/Drive/Insta):',
+                    'Which areas are you comfortable with?',
+                    'Public Relations Prior Experience:',
+                    'Which areas of editorial work interest you?',
+                    'What type of writing are you most comfortable with?',
+                    'Writing & Editorial Prior Experience / Sample:',
+                    'Confirm your target executive position:',
+                    'Why are you interested in taking an executive role in the Science Society?',
+                    'What do you think you can contribute to the society in this role?',
+                    'Leadership & Management Prior Experience:',
+                    'Consent Declaration: I agree to the terms, recruitment evaluation, and consent to my data being processed.',
+                    'Declaration: I confirm that all the information provided is accurate and true.'
+                  ]);
 
-                <div className="space-y-5 relative">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Form Questions & Answers</h4>
-                  <div className="absolute left-0 top-7 bottom-0 w-px bg-slate-200 ml-3"></div>
-                  
-                  {selectedApp.answers && Object.entries(selectedApp.answers)
-                    .filter(([key]) => !key.startsWith('_'))
-                    .map(([question, answer]: [string, any], index) => (
-                    <div key={index} className="relative pl-9">
-                      <div className="absolute left-0 w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-xs">
-                        {index + 1}
+                  const extraAnswers = Object.entries(answers).filter(
+                    ([key]) => !key.startsWith('_') && !knownKeys.has(key)
+                  );
+
+                  const hasSubdomainAnswers = Boolean(
+                    answers['Which aspects of event management interest you?'] ||
+                    answers['Event Management Prior Experience:'] ||
+                    answers['What skills do you have?'] ||
+                    answers['Decor & Arts Prior Experience:'] ||
+                    answers['Link to your previous work / portfolio (Drive/Instagram):'] ||
+                    answers['What tools/software are you comfortable using?'] ||
+                    answers['Media & Content Prior Experience:'] ||
+                    answers['Portfolio / Social Media link (Behance/Drive/Insta):'] ||
+                    answers['Which areas are you comfortable with?'] ||
+                    answers['Public Relations Prior Experience:'] ||
+                    answers['Which areas of editorial work interest you?'] ||
+                    answers['What type of writing are you most comfortable with?'] ||
+                    answers['Writing & Editorial Prior Experience / Sample:'] ||
+                    answers['Confirm your target executive position:'] ||
+                    answers['Why are you interested in taking an executive role in the Science Society?'] ||
+                    answers['What do you think you can contribute to the society in this role?'] ||
+                    answers['Leadership & Management Prior Experience:']
+                  );
+
+                  return (
+                    <>
+                      {/* Hero Header */}
+                      <div className="bg-gradient-to-r from-blue-50/80 via-white to-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className="h-14 w-14 rounded-2xl bg-[#0056A8] text-white flex items-center justify-center font-bold text-2xl shadow-md shadow-[#0056A8]/20">
+                            {selectedApp.applicant_name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900">{selectedApp.applicant_name}</h3>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#0056A8] text-white">
+                                {selectedApp.applied_position}
+                              </span>
+                              <span className="text-xs text-slate-500 font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
+                                {selectedApp.registration_number}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-left sm:text-right text-xs text-slate-500">
+                          <div className="flex items-center sm:justify-end gap-1 text-slate-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Submitted:</span>
+                          </div>
+                          <div className="font-semibold text-slate-700 mt-0.5">
+                            {new Date(selectedApp.created_at).toLocaleString()}
+                          </div>
+                        </div>
                       </div>
-                      <h5 className="text-xs font-semibold text-slate-800 mb-1">{question}</h5>
-                      <div className="text-slate-600 bg-white border border-slate-100 rounded-xl p-3 text-sm shadow-2xs">
-                        {Array.isArray(answer) ? (
-                          answer.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-1">
-                              {answer.map((item, i) => <li key={i}>{item}</li>)}
-                            </ul>
-                          ) : (
-                            <span className="text-slate-400 italic">No options selected</span>
-                          )
-                        ) : (
-                          answer || <span className="text-slate-400 italic">Not provided</span>
+
+                      {/* Section: Personal Details */}
+                      <AdminSectionCard icon={User} title="Personal Details">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <DetailTile label="Full Name" value={selectedApp.applicant_name || answers['Your full name']} />
+                          <DetailTile label="CNIC / B-Form Number" value={cnic} />
+                          <DetailTile label="Registration Number" value={selectedApp.registration_number || answers['Registration Number']} />
+                          <DetailTile label="Department" value={dept} />
+                          <DetailTile label="Degree / Program" value={prog} />
+                          <DetailTile label="Semester" value={selectedApp.semester || answers['Semester']} />
+                          <DetailTile label="Gender" value={gender} />
+                          <DetailTile label="Date of Birth" value={dob} />
+                          <DetailTile label="Personal Email" value={email} isEmail={true} />
+                          <DetailTile label="Phone / WhatsApp" value={phone} isPhone={true} />
+                          <DetailTile label="Province / Territory" value={province} />
+                          <DetailTile label="City" value={city} />
+                          <DetailTile label="Street / Hostel Address" value={streetAddress} colSpan={2} />
+                        </div>
+                      </AdminSectionCard>
+
+                      {/* Section: Application Motivation */}
+                      <AdminSectionCard icon={Sparkles} title="Application Motivation">
+                        <QuestionAnswerBlock 
+                          question="Why do you want to join the PAF-IAST Science Society?" 
+                          answer={answers['Why do you want to join the PAF-IAST Science Society?']} 
+                        />
+                        <QuestionAnswerBlock 
+                          question="What is your biggest motivation to join the society?" 
+                          answer={answers['What is your biggest motivation to join the society?']} 
+                        />
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                          <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Competitions</div>
+                            <div className="text-xs text-slate-700">Tournaments participation:</div>
+                            <div className="mt-1.5">
+                              {answers['Would you be able to participate in competitions/tournaments?'] === 'Yes' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✓ Yes</span>
+                              ) : answers['Would you be able to participate in competitions/tournaments?'] === 'No' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">✗ No</span>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">Not answered</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Travel</div>
+                            <div className="text-xs text-slate-700">Travel for group events:</div>
+                            <div className="mt-1.5">
+                              {answers['Would you be able to travel for group events?'] === 'Yes' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✓ Yes</span>
+                              ) : answers['Would you be able to travel for group events?'] === 'No' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">✗ No</span>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">Not answered</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Commitment</div>
+                            <div className="text-xs text-slate-700">Meetings & Deadlines:</div>
+                            <div className="mt-1.5">
+                              {answers['Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?'] === 'Yes' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✓ Yes</span>
+                              ) : answers['Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?'] === 'No' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">✗ No</span>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">Not answered</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-1">
+                          <div className="text-xs font-semibold text-slate-700 mb-1.5">Member of another university society/organization:</div>
+                          <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-800">
+                              {answers['Are you currently a member of any other university society/organization?'] || 'No'}
+                            </span>
+                            {answers['Are you currently a member of any other university society/organization?'] === 'Yes' && (
+                              <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                                Active Elsewhere
+                              </span>
+                            )}
+                          </div>
+                          {answers['Which society/organization and what is your role?'] && (
+                            <div className="mt-2.5 pl-3 border-l-2 border-[#0056A8]">
+                              <QuestionAnswerBlock 
+                                question="Society/Organization & Role Details:" 
+                                answer={answers['Which society/organization and what is your role?']} 
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {answers["Is there anything else you'd like us to know about you?"] && (
+                          <QuestionAnswerBlock 
+                            question="Is there anything else you'd like us to know about you?" 
+                            answer={answers["Is there anything else you'd like us to know about you?"]} 
+                          />
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </AdminSectionCard>
 
+                      {/* Section: Team Selection & Experience */}
+                      <AdminSectionCard icon={Briefcase} title="Team Selection & Experience">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <DetailTile label="Applied Team" value={selectedApp.applied_position || answers['Which team are you registering for?']} />
+                          <DetailTile label="Second-Choice Team" value={secondChoiceTeam} />
+                          <DetailTile label="Skill Level" value={skillLevel} />
+                        </div>
+
+                        <QuestionAnswerBlock 
+                          question="Detailed prior experience related to the position/team:" 
+                          answer={answers['Detailed prior experience related to the position/team:']} 
+                        />
+
+                        {answers["Please share details if you've received any awards or certificates for this:"] && (
+                          <QuestionAnswerBlock 
+                            question="Awards or Certificates Details:" 
+                            answer={answers["Please share details if you've received any awards or certificates for this:"]} 
+                          />
+                        )}
+                      </AdminSectionCard>
+
+                      {/* Section: Subdomain Experience */}
+                      {hasSubdomainAnswers && (
+                        <AdminSectionCard icon={Layers} title={`${selectedApp.applied_position || 'Subdomain'} Experience`} badge={selectedApp.applied_position}>
+                          {/* Event Management */}
+                          {answers['Which aspects of event management interest you?'] && (
+                            <QuestionAnswerBlock 
+                              question="Aspects of Event Management of interest:" 
+                              answer={answers['Which aspects of event management interest you?']} 
+                            />
+                          )}
+                          {answers['Event Management Prior Experience:'] && (
+                            <QuestionAnswerBlock 
+                              question="Event Management Prior Experience:" 
+                              answer={answers['Event Management Prior Experience:']} 
+                            />
+                          )}
+
+                          {/* Decor & Arts */}
+                          {answers['What skills do you have?'] && (
+                            <QuestionAnswerBlock 
+                              question="Skills & Craft Proficiencies:" 
+                              answer={answers['What skills do you have?']} 
+                            />
+                          )}
+                          {answers['Decor & Arts Prior Experience:'] && (
+                            <QuestionAnswerBlock 
+                              question="Decor & Arts Prior Experience:" 
+                              answer={answers['Decor & Arts Prior Experience:']} 
+                            />
+                          )}
+                          {answers['Link to your previous work / portfolio (Drive/Instagram):'] && (
+                            <QuestionAnswerBlock 
+                              question="Work / Portfolio Link:" 
+                              answer={answers['Link to your previous work / portfolio (Drive/Instagram):']} 
+                            />
+                          )}
+
+                          {/* Media & Content */}
+                          {answers['What tools/software are you comfortable using?'] && (
+                            <QuestionAnswerBlock 
+                              question="Tools & Software Proficiencies:" 
+                              answer={answers['What tools/software are you comfortable using?']} 
+                            />
+                          )}
+                          {answers['Media & Content Prior Experience:'] && (
+                            <QuestionAnswerBlock 
+                              question="Media & Content Prior Experience:" 
+                              answer={answers['Media & Content Prior Experience:']} 
+                            />
+                          )}
+                          {answers['Portfolio / Social Media link (Behance/Drive/Insta):'] && (
+                            <QuestionAnswerBlock 
+                              question="Portfolio / Social Media Link:" 
+                              answer={answers['Portfolio / Social Media link (Behance/Drive/Insta):']} 
+                            />
+                          )}
+
+                          {/* Public Relations */}
+                          {answers['Which areas are you comfortable with?'] && (
+                            <QuestionAnswerBlock 
+                              question="Public Relations Focus Areas:" 
+                              answer={answers['Which areas are you comfortable with?']} 
+                            />
+                          )}
+                          {answers['Public Relations Prior Experience:'] && (
+                            <QuestionAnswerBlock 
+                              question="Public Relations Prior Experience:" 
+                              answer={answers['Public Relations Prior Experience:']} 
+                            />
+                          )}
+
+                          {/* Content & Editorial */}
+                          {answers['Which areas of editorial work interest you?'] && (
+                            <QuestionAnswerBlock 
+                              question="Editorial Work Areas:" 
+                              answer={answers['Which areas of editorial work interest you?']} 
+                            />
+                          )}
+                          {answers['What type of writing are you most comfortable with?'] && (
+                            <QuestionAnswerBlock 
+                              question="Writing Style Comfortable With:" 
+                              answer={answers['What type of writing are you most comfortable with?']} 
+                            />
+                          )}
+                          {answers['Writing & Editorial Prior Experience / Sample:'] && (
+                            <QuestionAnswerBlock 
+                              question="Writing & Editorial Experience / Sample:" 
+                              answer={answers['Writing & Editorial Prior Experience / Sample:']} 
+                            />
+                          )}
+
+                          {/* Executive Leadership */}
+                          {answers['Confirm your target executive position:'] && (
+                            <DetailTile 
+                              label="Confirmed Target Executive Role" 
+                              value={answers['Confirm your target executive position:']} 
+                            />
+                          )}
+                          {answers['Why are you interested in taking an executive role in the Science Society?'] && (
+                            <QuestionAnswerBlock 
+                              question="Why are you interested in taking an executive role in the Science Society?" 
+                              answer={answers['Why are you interested in taking an executive role in the Science Society?']} 
+                            />
+                          )}
+                          {answers['What do you think you can contribute to the society in this role?'] && (
+                            <QuestionAnswerBlock 
+                              question="What do you think you can contribute to the society in this role?" 
+                              answer={answers['What do you think you can contribute to the society in this role?']} 
+                            />
+                          )}
+                          {answers['Leadership & Management Prior Experience:'] && (
+                            <QuestionAnswerBlock 
+                              question="Leadership & Management Prior Experience:" 
+                              answer={answers['Leadership & Management Prior Experience:']} 
+                            />
+                          )}
+                        </AdminSectionCard>
+                      )}
+
+                      {/* Section: Terms, Privacy & Consent */}
+                      <AdminSectionCard icon={ShieldCheck} title="Terms, Privacy & Consent">
+                        <div className="p-3.5 rounded-xl border border-emerald-100 bg-emerald-50/60 flex items-center justify-between">
+                          <div>
+                            <div className="text-xs font-bold text-emerald-900 mb-0.5">Applicant Consent Status</div>
+                            <div className="text-xs text-emerald-700">Verified agreement to data processing & recruitment evaluation</div>
+                          </div>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                            {answers['Consent Declaration: I agree to the terms, recruitment evaluation, and consent to my data being processed.'] || 
+                             answers['Declaration: I confirm that all the information provided is accurate and true.'] || 'Agreed & Consented'}
+                          </span>
+                        </div>
+                      </AdminSectionCard>
+
+                      {/* Section: Additional Responses (Fallback) */}
+                      {extraAnswers.length > 0 && (
+                        <AdminSectionCard icon={HelpCircle} title="Additional Responses">
+                          <div className="space-y-4">
+                            {extraAnswers.map(([q, a], idx) => (
+                              <QuestionAnswerBlock key={idx} question={q} answer={a} />
+                            ))}
+                          </div>
+                        </AdminSectionCard>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* Bottom Delete Button inside drawer */}
-                <div className="mt-10 pt-6 border-t border-slate-200">
+                <div className="pt-4 border-t border-slate-200">
                   <button
                     onClick={() => setAppToDelete(selectedApp)}
                     className="w-full py-3 px-4 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
@@ -586,6 +955,150 @@ export default function AdminDashboard() {
           </>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function AdminSectionCard({ 
+  icon: Icon, 
+  title, 
+  badge,
+  children 
+}: { 
+  icon: any; 
+  title: string; 
+  badge?: string; 
+  children: React.ReactNode; 
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#0056A8] flex items-center justify-center border border-blue-100">
+            <Icon className="w-4 h-4" />
+          </div>
+          <h4 className="font-bold text-slate-900 text-sm tracking-tight">{title}</h4>
+        </div>
+        {badge && (
+          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-[#0056A8] border border-blue-200/60">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className="p-5 space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DetailTile({ 
+  label, 
+  value, 
+  icon: Icon, 
+  colSpan = 1,
+  isEmail = false,
+  isPhone = false 
+}: { 
+  label: string; 
+  value: any; 
+  icon?: any; 
+  colSpan?: number;
+  isEmail?: boolean;
+  isPhone?: boolean;
+}) {
+  const isLink = typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'));
+  
+  return (
+    <div className={`p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 flex flex-col justify-between ${colSpan === 2 ? 'col-span-1 sm:col-span-2' : ''}`}>
+      <div className="flex items-center text-slate-500 mb-1.5 text-[11px] font-medium tracking-wide uppercase">
+        {Icon && <Icon className="w-3.5 h-3.5 mr-1.5 text-slate-400" />}
+        {label}
+      </div>
+      {isEmail && value && value !== 'N/A' ? (
+        <a 
+          href={`mailto:${value}`} 
+          className="text-xs sm:text-sm font-semibold text-[#0056A8] hover:underline flex items-center gap-1 truncate"
+        >
+          <Mail className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{value}</span>
+        </a>
+      ) : isPhone && value && value !== 'N/A' ? (
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-semibold text-slate-900 font-mono">{value}</span>
+          {value.includes('+92') && (
+            <a
+              href={`https://wa.me/${value.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors"
+              title="Open in WhatsApp"
+            >
+              WA
+            </a>
+          )}
+        </div>
+      ) : isLink ? (
+        <a 
+          href={value} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-xs sm:text-sm font-semibold text-[#0056A8] hover:underline flex items-center gap-1 break-all"
+        >
+          <span>{value}</span>
+          <ExternalLink className="w-3 h-3 shrink-0" />
+        </a>
+      ) : (
+        <div className="font-semibold text-slate-900 text-xs sm:text-sm break-words">
+          {value || <span className="text-slate-400 font-normal italic">Not provided</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuestionAnswerBlock({ 
+  question, 
+  answer 
+}: { 
+  question: string; 
+  answer: any; 
+}) {
+  const isLink = typeof answer === 'string' && (answer.startsWith('http://') || answer.startsWith('https://'));
+  const isArray = Array.isArray(answer);
+  
+  return (
+    <div className="space-y-1.5">
+      <div className="text-xs font-semibold text-slate-700 leading-snug">
+        {question}
+      </div>
+      <div className="bg-slate-50/70 border border-slate-200/70 rounded-xl p-3 text-xs sm:text-sm text-slate-800 leading-relaxed shadow-2xs">
+        {isArray ? (
+          answer.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {answer.map((item: string, i: number) => (
+                <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-blue-50 text-[#0056A8] text-xs font-semibold border border-blue-100">
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-slate-400 italic">None selected</span>
+          )
+        ) : isLink ? (
+          <a 
+            href={answer} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0056A8] hover:underline break-all bg-white px-3 py-1.5 rounded-lg border border-slate-200"
+          >
+            <span>{answer}</span>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          </a>
+        ) : (
+          <div className="whitespace-pre-wrap">{answer || <span className="text-slate-400 italic">Not provided</span>}</div>
+        )}
+      </div>
     </div>
   );
 }

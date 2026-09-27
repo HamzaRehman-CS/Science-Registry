@@ -14,24 +14,6 @@ const TEAMS = [
   "Vice President ( male )"
 ];
 
-const COUNTRY_CODES = [
-  { code: "+92", label: "PK (+92)" },
-  { code: "+971", label: "UAE (+971)" },
-  { code: "+966", label: "KSA (+966)" },
-  { code: "+1", label: "US/CA (+1)" },
-  { code: "+44", label: "UK (+44)" },
-  { code: "+968", label: "Oman (+968)" },
-  { code: "+974", label: "Qatar (+974)" },
-  { code: "+965", label: "Kuwait (+965)" },
-  { code: "+973", label: "Bahrain (+973)" },
-  { code: "+49", label: "Germany (+49)" },
-  { code: "+61", label: "Australia (+61)" },
-  { code: "+86", label: "China (+86)" },
-  { code: "+60", label: "Malaysia (+60)" },
-  { code: "+90", label: "Turkey (+90)" },
-  { code: "+", label: "Other (+)" }
-];
-
 const PROVINCES = [
   "Khyber Pakhtunkhwa (KPK)",
   "Punjab",
@@ -42,38 +24,8 @@ const PROVINCES = [
   "Gilgit-Baltistan (GB)"
 ];
 
-const POPULAR_CITIES = [
-  "Haripur",
-  "Abbottabad",
-  "Havelian",
-  "Islamabad",
-  "Rawalpindi",
-  "Peshawar",
-  "Mansehra",
-  "Swat",
-  "Mardan",
-  "Wah Cantt",
-  "Hasan Abdal",
-  "Taxila",
-  "Attock",
-  "Lahore",
-  "Faisalabad",
-  "Multan",
-  "Gujranwala",
-  "Sialkot",
-  "Karachi",
-  "Hyderabad",
-  "Sukkur",
-  "Quetta",
-  "Muzaffarabad",
-  "Mirpur",
-  "Gilgit",
-  "Skardu"
-];
-
 export default function ApplicationForm() {
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [countryCode, setCountryCode] = useState('+92');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,11 +35,7 @@ export default function ApplicationForm() {
     try {
       const draft = localStorage.getItem('paf_ss_form_draft');
       if (draft) {
-        const parsed = JSON.parse(draft);
-        setFormData(parsed);
-        if (parsed._countryCode) {
-          setCountryCode(parsed._countryCode);
-        }
+        setFormData(JSON.parse(draft));
       }
     } catch (e) {
       console.warn('Failed to load draft:', e);
@@ -96,7 +44,7 @@ export default function ApplicationForm() {
 
   const handleChange = (name: string, value: any) => {
     setFormData(prev => {
-      const updated = { ...prev, [name]: value, _countryCode: countryCode };
+      const updated = { ...prev, [name]: value };
       try {
         localStorage.setItem('paf_ss_form_draft', JSON.stringify(updated));
       } catch (e) {}
@@ -110,13 +58,14 @@ export default function ApplicationForm() {
       const updatedList = checked 
         ? [...current, value] 
         : current.filter((v: string) => v !== value);
-      const updated = { ...prev, [name]: updatedList, _countryCode: countryCode };
+      const updated = { ...prev, [name]: updatedList };
       try {
         localStorage.setItem('paf_ss_form_draft', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
   };
+
 
   const selectedTeam = formData['Which team are you registering for?'];
   const isMemberOfOtherSociety = formData['Are you currently a member of any other university society/organization?'] === 'Yes';
@@ -177,8 +126,9 @@ export default function ApplicationForm() {
       const province = formData['Province / Region'];
       const city = formData['City'];
       const streetAddress = formData['Street / Hostel Address'];
-      const localPhone = formData['Phone Number / WhatsApp'] || '';
-      const fullPhone = `${countryCode} ${localPhone}`.trim();
+      const rawPhone = (formData['Phone Number / WhatsApp'] || '').trim().replace(/^\+?92\s*/, '');
+      const fullPhone = rawPhone ? `+92 ${rawPhone}` : '';
+      const email = formData['Personal Email Address'] || formData['Email address'] || '';
       const combinedDept = program ? `${department} - ${program}` : department;
 
       const { error: dbError } = await supabase
@@ -192,6 +142,7 @@ export default function ApplicationForm() {
             applied_position: selectedTeam,
             answers: {
               ...formData,
+              'Personal Email Address': email,
               'Phone Number / WhatsApp': fullPhone,
               _cnic: cnic,
               _department: department,
@@ -199,10 +150,12 @@ export default function ApplicationForm() {
               _province: province,
               _city: city,
               _streetAddress: streetAddress,
-              _phone: fullPhone
+              _phone: fullPhone,
+              _email: email
             }
           }
         ]);
+
 
       if (dbError) throw dbError;
 
@@ -305,8 +258,8 @@ export default function ApplicationForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* Section 1: Personal Details */}
-          <Section title="Section 1: Personal Details">
+          {/* Personal Details */}
+          <Section title="Personal Details">
             <TextInput 
               name="Your full name" 
               value={formData} 
@@ -325,41 +278,30 @@ export default function ApplicationForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <TextInput 
-                name="Email address" 
+                name="Personal Email Address" 
                 type="email" 
                 value={formData} 
                 onChange={handleChange} 
-                placeholder="e.g. student@paf-iast.edu.pk" 
+                placeholder="e.g. yourname@gmail.com (Personal email, not university email)" 
                 required 
               />
 
-              {/* Phone with Country Code Selector */}
+              {/* Phone with fixed +92 prefix */}
               <div>
                 <label className="block text-[15px] font-medium text-slate-800 mb-2">
                   Phone Number / WhatsApp <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => {
-                      setCountryCode(e.target.value);
-                      handleChange('_countryCode', e.target.value);
-                    }}
-                    className="w-32 px-2.5 py-3 rounded-xl border border-slate-200 bg-white/80 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none cursor-pointer"
-                  >
-                    {COUNTRY_CODES.map(c => (
-                      <option key={c.label} value={c.code}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex rounded-xl border border-slate-200 bg-white/70 overflow-hidden focus-within:ring-2 focus-within:ring-[#0056A8]/20 focus-within:border-[#0056A8] transition-all">
+                  <span className="inline-flex items-center px-3.5 bg-slate-100 text-slate-700 font-bold text-sm border-r border-slate-200 select-none">
+                    +92
+                  </span>
                   <input
                     type="tel"
                     value={formData['Phone Number / WhatsApp'] || ''}
                     onChange={(e) => handleChange('Phone Number / WhatsApp', e.target.value)}
                     required
                     placeholder="300 1234567"
-                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white/70 focus:bg-white focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none transition-all text-sm font-medium"
+                    className="flex-1 px-4 py-3 bg-transparent outline-none text-sm font-medium text-slate-800"
                   />
                 </div>
               </div>
@@ -424,25 +366,19 @@ export default function ApplicationForm() {
                   </select>
                 </div>
 
-                {/* City with quick options / suggestions */}
+                {/* City directly typed by user */}
                 <div>
                   <label className="block text-[14px] font-medium text-slate-700 mb-1.5">
                     City <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    list="city-options"
                     value={formData['City'] || ''}
                     onChange={(e) => handleChange('City', e.target.value)}
                     required
-                    placeholder="e.g. Haripur, Abbottabad, Islamabad"
+                    placeholder="e.g. Haripur, Abbottabad, Peshawar, Lahore"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none"
                   />
-                  <datalist id="city-options">
-                    {POPULAR_CITIES.map(c => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
                 </div>
               </div>
 
@@ -479,8 +415,8 @@ export default function ApplicationForm() {
             />
           </Section>
 
-          {/* Section 2: Motivation & Commitment */}
-          <Section title="Section 2: Application Motivation">
+          {/* Motivation & Commitment */}
+          <Section title="Application Motivation">
             <TextAreaWithCharCount 
               name="Why do you want to join the PAF-IAST Science Society?" 
               value={formData} 
@@ -560,8 +496,8 @@ export default function ApplicationForm() {
             />
           </Section>
 
-          {/* Section 3: Teams & Prior Experience */}
-          <Section title="Section 3: Team Selection & Experience">
+          {/* Teams & Prior Experience */}
+          <Section title="Team Selection & Experience">
             <RadioGroup 
               name="Which team are you registering for?" 
               options={TEAMS} 
@@ -607,7 +543,7 @@ export default function ApplicationForm() {
             {selectedTeam === "Event Management" && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 4: Event Management Subdomain">
+                  <Section title="Event Management Subdomain">
                     <CheckboxGroup 
                       name="Which aspects of event management interest you?" 
                       options={["Planning", "Logistics", "Coordination", "Crowd/participant management", "Stage/program management", "Event execution", "Team coordination"]} 
@@ -630,7 +566,7 @@ export default function ApplicationForm() {
             {selectedTeam === "Decor & Arts" && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 5: Decor & Arts Subdomain">
+                  <Section title="Decor & Arts Subdomain">
                     <CheckboxGroup 
                       name="What skills do you have?" 
                       options={["Arts & crafts", "Handmade decorations", "Stall decoration", "Props", "Backdrops", "Banners/sign boards physically", "Event venue setup", "Themed displays", "Creative installations", "Other"]} 
@@ -659,7 +595,7 @@ export default function ApplicationForm() {
             {selectedTeam === "Media & Content" && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 6: Media & Content Subdomain">
+                  <Section title="Media & Content Subdomain">
                     <CheckboxGroup 
                       name="What tools/software are you comfortable using?" 
                       options={["Canva", "Photoshop", "Illustrator", "CapCut", "Premiere Pro / After Effects", "Figma", "Photography", "Videography", "Graphic design", "Reels/Shorts", "Social media management", "Digital posters/carousels", "Other"]} 
@@ -688,7 +624,7 @@ export default function ApplicationForm() {
             {selectedTeam === "Public Relations (PR)" && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 7: Public Relations Subdomain">
+                  <Section title="Public Relations Subdomain">
                     <CheckboxGroup 
                       name="Which areas are you comfortable with?" 
                       options={["Communication", "Public speaking", "Outreach", "Contacting organizations/societies", "Sponsorship & corporate liaisons", "Social media communication", "Networking", "Other"]} 
@@ -711,7 +647,7 @@ export default function ApplicationForm() {
             {selectedTeam === "Content & Editorial" && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 8: Content & Editorial Subdomain">
+                  <Section title="Content & Editorial Subdomain">
                     <CheckboxGroup 
                       name="Which areas of editorial work interest you?" 
                       options={["Science & research news", "University/local news & updates", "Articles & write-ups", "Newsletters", "Research summaries", "Event reports", "Other"]} 
@@ -741,7 +677,7 @@ export default function ApplicationForm() {
             {(selectedTeam === "General Secretary" || selectedTeam === "Vice President ( male )") && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
-                  <Section title="Section 9: Executive Leadership Role">
+                  <Section title="Executive Leadership Role">
                     <RadioGroup 
                       name="Confirm your target executive position:" 
                       options={["Vice President", "General Secretary"]} 
@@ -779,8 +715,8 @@ export default function ApplicationForm() {
             )}
           </AnimatePresence>
 
-          {/* Section 10: Terms, Privacy & Declaration */}
-          <Section title="Section 10: Terms, Privacy & Consent">
+          {/* Terms, Privacy & Declaration */}
+          <Section title="Terms, Privacy & Consent">
             <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2.5 leading-relaxed">
               <div className="font-semibold text-slate-800 text-sm">Data Privacy & Recruitment Consent</div>
               <p>
