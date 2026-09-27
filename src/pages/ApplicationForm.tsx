@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ChevronRight, AlertCircle, FileText, Sparkles } from 'lucide-react';
+import { CheckCircle2, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 import clsx from 'clsx';
 
 const TEAMS = [
@@ -14,89 +14,171 @@ const TEAMS = [
   "Vice President ( male )"
 ];
 
-// Helper to count words in a string
-function countWords(str: string): number {
-  if (!str || !str.trim()) return 0;
-  return str.trim().split(/\s+/).filter(Boolean).length;
-}
+const COUNTRY_CODES = [
+  { code: "+92", label: "PK (+92)" },
+  { code: "+971", label: "UAE (+971)" },
+  { code: "+966", label: "KSA (+966)" },
+  { code: "+1", label: "US/CA (+1)" },
+  { code: "+44", label: "UK (+44)" },
+  { code: "+968", label: "Oman (+968)" },
+  { code: "+974", label: "Qatar (+974)" },
+  { code: "+965", label: "Kuwait (+965)" },
+  { code: "+973", label: "Bahrain (+973)" },
+  { code: "+49", label: "Germany (+49)" },
+  { code: "+61", label: "Australia (+61)" },
+  { code: "+86", label: "China (+86)" },
+  { code: "+60", label: "Malaysia (+60)" },
+  { code: "+90", label: "Turkey (+90)" },
+  { code: "+", label: "Other (+)" }
+];
+
+const PROVINCES = [
+  "Khyber Pakhtunkhwa (KPK)",
+  "Punjab",
+  "Sindh",
+  "Balochistan",
+  "Islamabad Capital Territory (ICT)",
+  "Azad Jammu & Kashmir (AJK)",
+  "Gilgit-Baltistan (GB)"
+];
+
+const POPULAR_CITIES = [
+  "Haripur",
+  "Abbottabad",
+  "Havelian",
+  "Islamabad",
+  "Rawalpindi",
+  "Peshawar",
+  "Mansehra",
+  "Swat",
+  "Mardan",
+  "Wah Cantt",
+  "Hasan Abdal",
+  "Taxila",
+  "Attock",
+  "Lahore",
+  "Faisalabad",
+  "Multan",
+  "Gujranwala",
+  "Sialkot",
+  "Karachi",
+  "Hyderabad",
+  "Sukkur",
+  "Quetta",
+  "Muzaffarabad",
+  "Mirpur",
+  "Gilgit",
+  "Skardu"
+];
 
 export default function ApplicationForm() {
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [countryCode, setCountryCode] = useState('+92');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Load saved draft on mount
+  useEffect(() => {
+    try {
+      const draft = localStorage.getItem('paf_ss_form_draft');
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        setFormData(parsed);
+        if (parsed._countryCode) {
+          setCountryCode(parsed._countryCode);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load draft:', e);
+    }
+  }, []);
+
   const handleChange = (name: string, value: any) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value, _countryCode: countryCode };
+      try {
+        localStorage.setItem('paf_ss_form_draft', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleCheckboxChange = (name: string, value: string, checked: boolean) => {
     setFormData(prev => {
       const current = prev[name] || [];
-      if (checked) {
-        return { ...prev, [name]: [...current, value] };
-      } else {
-        return { ...prev, [name]: current.filter((v: string) => v !== value) };
-      }
+      const updatedList = checked 
+        ? [...current, value] 
+        : current.filter((v: string) => v !== value);
+      const updated = { ...prev, [name]: updatedList, _countryCode: countryCode };
+      try {
+        localStorage.setItem('paf_ss_form_draft', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
   };
 
-  const selectedTeam = formData['19. Which team are you registering for?'];
+  const selectedTeam = formData['Which team are you registering for?'];
+  const isMemberOfOtherSociety = formData['Are you currently a member of any other university society/organization?'] === 'Yes';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
 
-    // Validate Word Limits on textareas
-    const wordLimitFields: { field: string; min: number; max: number }[] = [
-      { field: '11. Why do you want to join the PAF-IAST Science Society?', min: 15, max: 150 },
-      { field: '12. What is your biggest motivation to join the society?', min: 15, max: 150 },
-      { field: '22. Detailed prior experience related to the position/team:', min: 15, max: 200 }
+    // Validate Character Limits on textareas (min 15 chars, max 5000 chars)
+    const charLimitFields: string[] = [
+      'Why do you want to join the PAF-IAST Science Society?',
+      'What is your biggest motivation to join the society?',
+      'Detailed prior experience related to the position/team:'
     ];
 
     if (selectedTeam === "Event Management") {
-      wordLimitFields.push({ field: '25. Event Management Prior Experience:', min: 15, max: 200 });
+      charLimitFields.push('Event Management Prior Experience:');
     } else if (selectedTeam === "Decor & Arts") {
-      wordLimitFields.push({ field: '26. Decor & Arts Prior Experience:', min: 15, max: 200 });
+      charLimitFields.push('Decor & Arts Prior Experience:');
     } else if (selectedTeam === "Media & Content") {
-      wordLimitFields.push({ field: '27. Media & Content Prior Experience:', min: 15, max: 200 });
+      charLimitFields.push('Media & Content Prior Experience:');
     } else if (selectedTeam === "Public Relations (PR)") {
-      wordLimitFields.push({ field: '28. Public Relations Prior Experience:', min: 15, max: 200 });
+      charLimitFields.push('Public Relations Prior Experience:');
     } else if (selectedTeam === "Content & Editorial") {
-      wordLimitFields.push({ field: '31. Writing & Editorial Prior Experience / Sample:', min: 15, max: 200 });
+      charLimitFields.push('Writing & Editorial Prior Experience / Sample:');
     } else if (selectedTeam === "General Secretary" || selectedTeam === "Vice President ( male )") {
-      wordLimitFields.push(
-        { field: '33. Why are you interested in taking an executive role in the Science Society?', min: 20, max: 250 },
-        { field: '34. What do you think you can contribute to the society in this role?', min: 20, max: 250 },
-        { field: '36. Leadership & Management Prior Experience:', min: 20, max: 250 }
+      charLimitFields.push(
+        'Why are you interested in taking an executive role in the Science Society?',
+        'What do you think you can contribute to the society in this role?',
+        'Leadership & Management Prior Experience:'
       );
     }
 
-    for (const item of wordLimitFields) {
-      const answer = formData[item.field] || '';
-      const words = countWords(answer);
-      if (words < item.min) {
-        setError(`"${item.field}" requires at least ${item.min} words. Currently: ${words} words.`);
+    for (const field of charLimitFields) {
+      const answer = (formData[field] || '').trim();
+      if (answer.length < 15) {
+        setError(`"${field}" requires at least 15 characters. Currently: ${answer.length} characters.`);
         setSubmitting(false);
-        window.scrollTo({ top: 300, behavior: 'smooth' });
+        window.scrollTo({ top: 350, behavior: 'smooth' });
         return;
       }
-      if (words > item.max) {
-        setError(`"${item.field}" exceeds the maximum limit of ${item.max} words. Currently: ${words} words.`);
+      if (answer.length > 5000) {
+        setError(`"${field}" exceeds the maximum limit of 5,000 characters. Currently: ${answer.length} characters.`);
         setSubmitting(false);
-        window.scrollTo({ top: 300, behavior: 'smooth' });
+        window.scrollTo({ top: 350, behavior: 'smooth' });
         return;
       }
     }
 
     try {
-      const applicantName = formData['1. Your full name'];
-      const cnic = formData['2. CNIC / B-Form Number'];
-      const regNo = formData['5. Registration Number'];
-      const department = formData['6. Department'];
-      const program = formData['7. Degree / Program'];
-      const semester = formData['8. Semester'];
+      const applicantName = formData['Your full name'];
+      const cnic = formData['CNIC / B-Form Number'];
+      const regNo = formData['Registration Number'];
+      const department = formData['Department'];
+      const program = formData['Degree / Program'];
+      const semester = formData['Semester'];
+      const province = formData['Province / Region'];
+      const city = formData['City'];
+      const streetAddress = formData['Street / Hostel Address'];
+      const localPhone = formData['Phone Number / WhatsApp'] || '';
+      const fullPhone = `${countryCode} ${localPhone}`.trim();
       const combinedDept = program ? `${department} - ${program}` : department;
 
       const { error: dbError } = await supabase
@@ -110,18 +192,30 @@ export default function ApplicationForm() {
             applied_position: selectedTeam,
             answers: {
               ...formData,
+              'Phone Number / WhatsApp': fullPhone,
               _cnic: cnic,
               _department: department,
-              _program: program
+              _program: program,
+              _province: province,
+              _city: city,
+              _streetAddress: streetAddress,
+              _phone: fullPhone
             }
           }
         ]);
 
       if (dbError) throw dbError;
+
+      // Clear draft on successful submission
+      try {
+        localStorage.removeItem('paf_ss_form_draft');
+      } catch (e) {}
+
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
-      setError(err.message || "Failed to submit application. Please check your connection and try again.");
+      console.error('Submission error:', err);
+      setError(err.message || "Failed to submit application. Please check your internet connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +240,7 @@ export default function ApplicationForm() {
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Application Received!</h2>
           <p className="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
             Thank you for applying to the PAF-IAST Science Society Cabinet 2026–27. 
-            Your details have been securely recorded. Shortlisted applicants will be contacted for an interview.
+            Your registration has been securely recorded. Shortlisted candidates will be contacted for an interview.
           </p>
           <button 
             onClick={() => window.location.reload()}
@@ -163,7 +257,7 @@ export default function ApplicationForm() {
     <div className="min-h-screen bg-[#F8FAFC] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
         
-        {/* Header */}
+        {/* Header without the blue box */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -199,10 +293,6 @@ export default function ApplicationForm() {
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-3">
               Ready to be part of something bigger? Applications are now open for the PAF-IAST Science Society Cabinet 2026–27. Choose the team or position that best matches your interests, skills, and strengths, and tell us what you can bring to the society.
             </p>
-            <div className="mt-5 p-4 bg-blue-50/70 border border-blue-100/80 rounded-2xl flex items-center gap-3 text-sm text-[#0056A8]">
-              <Sparkles className="w-5 h-5 shrink-0 text-[#0056A8]" />
-              <span className="font-medium">Please review all answers carefully. Essay responses require concise, quality writing adhering to word limits.</span>
-            </div>
           </div>
         </motion.div>
 
@@ -218,7 +308,7 @@ export default function ApplicationForm() {
           {/* Section 1: Personal Details */}
           <Section title="Section 1: Personal Details">
             <TextInput 
-              name="1. Your full name" 
+              name="Your full name" 
               value={formData} 
               onChange={handleChange} 
               placeholder="e.g. Muhammad Ali" 
@@ -226,7 +316,7 @@ export default function ApplicationForm() {
             />
 
             <TextInput 
-              name="2. CNIC / B-Form Number" 
+              name="CNIC / B-Form Number" 
               value={formData} 
               onChange={handleChange} 
               placeholder="e.g. 13101-1234567-1 (13 digits)" 
@@ -235,25 +325,48 @@ export default function ApplicationForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <TextInput 
-                name="3. Email address" 
+                name="Email address" 
                 type="email" 
                 value={formData} 
                 onChange={handleChange} 
                 placeholder="e.g. student@paf-iast.edu.pk" 
                 required 
               />
-              <TextInput 
-                name="4. Phone number / WhatsApp" 
-                type="tel" 
-                value={formData} 
-                onChange={handleChange} 
-                placeholder="e.g. 0300-1234567" 
-                required 
-              />
+
+              {/* Phone with Country Code Selector */}
+              <div>
+                <label className="block text-[15px] font-medium text-slate-800 mb-2">
+                  Phone Number / WhatsApp <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => {
+                      setCountryCode(e.target.value);
+                      handleChange('_countryCode', e.target.value);
+                    }}
+                    className="w-32 px-2.5 py-3 rounded-xl border border-slate-200 bg-white/80 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none cursor-pointer"
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.label} value={c.code}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    value={formData['Phone Number / WhatsApp'] || ''}
+                    onChange={(e) => handleChange('Phone Number / WhatsApp', e.target.value)}
+                    required
+                    placeholder="300 1234567"
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white/70 focus:bg-white focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none transition-all text-sm font-medium"
+                  />
+                </div>
+              </div>
             </div>
 
             <TextInput 
-              name="5. Registration Number" 
+              name="Registration Number" 
               value={formData} 
               onChange={handleChange} 
               placeholder="e.g. B-22-F-1042" 
@@ -263,14 +376,14 @@ export default function ApplicationForm() {
             {/* Department and Degree/Program as Separate Options */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <TextInput 
-                name="6. Department" 
+                name="Department" 
                 value={formData} 
                 onChange={handleChange} 
                 placeholder="e.g. Computer Science / Electrical / Allied Health" 
                 required 
               />
               <TextInput 
-                name="7. Degree / Program" 
+                name="Degree / Program" 
                 value={formData} 
                 onChange={handleChange} 
                 placeholder="e.g. BS AI, BS SE, DPT, BBA" 
@@ -280,14 +393,77 @@ export default function ApplicationForm() {
 
             {/* Semester Selector up to 10 */}
             <SemesterSelector 
-              name="8. Semester" 
+              name="Semester" 
               value={formData} 
               onChange={handleChange} 
               required 
             />
 
+            {/* Residential Location & Province / Special Areas */}
+            <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-5">
+              <div className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                <span>Residential Location & Address</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Province / Administrative Territory */}
+                <div>
+                  <label className="block text-[14px] font-medium text-slate-700 mb-1.5">
+                    Province / Special Area <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData['Province / Region'] || ''}
+                    onChange={(e) => handleChange('Province / Region', e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none cursor-pointer"
+                  >
+                    <option value="">-- Select Province / Area --</option>
+                    {PROVINCES.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* City with quick options / suggestions */}
+                <div>
+                  <label className="block text-[14px] font-medium text-slate-700 mb-1.5">
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    list="city-options"
+                    value={formData['City'] || ''}
+                    onChange={(e) => handleChange('City', e.target.value)}
+                    required
+                    placeholder="e.g. Haripur, Abbottabad, Islamabad"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none"
+                  />
+                  <datalist id="city-options">
+                    {POPULAR_CITIES.map(c => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Complete Street Address */}
+              <div>
+                <label className="block text-[14px] font-medium text-slate-700 mb-1.5">
+                  Complete Street / Hostel Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData['Street / Hostel Address'] || ''}
+                  onChange={(e) => handleChange('Street / Hostel Address', e.target.value)}
+                  required
+                  placeholder="e.g. House No. 42, Street 3, Sector B, or PAF-IAST Boys/Girls Hostel Room 12"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8] outline-none"
+                />
+              </div>
+            </div>
+
             <RadioGroup 
-              name="9. What gender do you identify as?" 
+              name="What gender do you identify as?" 
               options={["Female", "Male"]} 
               value={formData} 
               onChange={handleChange} 
@@ -295,7 +471,7 @@ export default function ApplicationForm() {
             />
 
             <TextInput 
-              name="10. Date of birth" 
+              name="Date of birth" 
               type="date" 
               value={formData} 
               onChange={handleChange} 
@@ -305,28 +481,24 @@ export default function ApplicationForm() {
 
           {/* Section 2: Motivation & Commitment */}
           <Section title="Section 2: Application Motivation">
-            <TextAreaWithWordCount 
-              name="11. Why do you want to join the PAF-IAST Science Society?" 
+            <TextAreaWithCharCount 
+              name="Why do you want to join the PAF-IAST Science Society?" 
               value={formData} 
               onChange={handleChange} 
-              minWords={15} 
-              maxWords={150} 
               placeholder="Explain why you want to become part of the Science Society Cabinet..."
               required 
             />
 
-            <TextAreaWithWordCount 
-              name="12. What is your biggest motivation to join the society?" 
+            <TextAreaWithCharCount 
+              name="What is your biggest motivation to join the society?" 
               value={formData} 
               onChange={handleChange} 
-              minWords={15} 
-              maxWords={150} 
               placeholder="What inspires or drives you to contribute here..."
               required 
             />
 
             <RadioGroup 
-              name="13. Would you be able to participate in competitions/tournaments?" 
+              name="Would you be able to participate in competitions/tournaments?" 
               options={["Yes", "No"]} 
               value={formData} 
               onChange={handleChange} 
@@ -334,7 +506,7 @@ export default function ApplicationForm() {
             />
 
             <RadioGroup 
-              name="14. Would you be able to travel for group events?" 
+              name="Would you be able to travel for group events?" 
               options={["Yes", "No"]} 
               value={formData} 
               onChange={handleChange} 
@@ -342,33 +514,48 @@ export default function ApplicationForm() {
             />
 
             <RadioGroup 
-              name="15. Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?" 
+              name="Are you willing to attend meetings, participate in events, and complete assigned tasks within the given deadlines?" 
               options={["Yes", "No"]} 
               value={formData} 
               onChange={handleChange} 
               required 
             />
 
+            {/* Conditional Question: Only show society details if 'Yes' */}
             <RadioGroup 
-              name="16. Are you currently a member of any other university society/organization?" 
-              options={["Yes", "No"]} 
+              name="Are you currently a member of any other university society/organization?" 
+              options={["No", "Yes"]} 
               value={formData} 
               onChange={handleChange} 
               required 
             />
+
+            <AnimatePresence>
+              {isMemberOfOtherSociety && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-2 pl-4 border-l-2 border-[#0056A8]/40">
+                    <TextInput 
+                      name="Which society/organization and what is your role?" 
+                      value={formData} 
+                      onChange={handleChange} 
+                      placeholder="e.g. Media Society (Member), GDSC (Lead)"
+                      required={isMemberOfOtherSociety}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <TextInput 
-              name="17. If yes: Which society/organization and what is your role?" 
+              name="Is there anything else you'd like us to know about you?" 
               value={formData} 
               onChange={handleChange} 
-              placeholder="Leave blank if not applicable"
-            />
-
-            <TextInput 
-              name="18. Is there anything else you'd like us to know about you?" 
-              value={formData} 
-              onChange={handleChange} 
-              placeholder="Any additional passions, hobbies, or traits..."
+              placeholder="Any additional passions, hobbies, or achievements..."
               required 
             />
           </Section>
@@ -376,7 +563,7 @@ export default function ApplicationForm() {
           {/* Section 3: Teams & Prior Experience */}
           <Section title="Section 3: Team Selection & Experience">
             <RadioGroup 
-              name="19. Which team are you registering for?" 
+              name="Which team are you registering for?" 
               options={TEAMS} 
               value={formData} 
               onChange={handleChange} 
@@ -384,7 +571,7 @@ export default function ApplicationForm() {
             />
 
             <TextInput 
-              name="20. What is your second-choice team?" 
+              name="What is your second-choice team?" 
               value={formData} 
               onChange={handleChange} 
               placeholder="e.g. Media & Content or Decor & Arts"
@@ -392,25 +579,23 @@ export default function ApplicationForm() {
             />
 
             <RadioGroup 
-              name="21. What is your skill level in this domain?" 
+              name="What is your skill level in this domain?" 
               options={["Beginner", "Intermediate", "Advanced", "Expert"]} 
               value={formData} 
               onChange={handleChange} 
               required 
             />
 
-            <TextAreaWithWordCount 
-              name="22. Detailed prior experience related to the position/team:" 
+            <TextAreaWithCharCount 
+              name="Detailed prior experience related to the position/team:" 
               value={formData} 
               onChange={handleChange} 
-              minWords={15} 
-              maxWords={200} 
               placeholder="Detail your prior background, projects, or tasks handled in this field..."
               required 
             />
 
             <TextInput 
-              name="23. Please share details if you've received any awards or certificates for this:" 
+              name="Please share details if you've received any awards or certificates for this:" 
               value={formData} 
               onChange={handleChange} 
               placeholder="Mention competitions won, certifications, or recognitions"
@@ -424,18 +609,16 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 4: Event Management Subdomain">
                     <CheckboxGroup 
-                      name="24. Which aspects of event management interest you?" 
+                      name="Which aspects of event management interest you?" 
                       options={["Planning", "Logistics", "Coordination", "Crowd/participant management", "Stage/program management", "Event execution", "Team coordination"]} 
                       value={formData} 
                       onChange={handleCheckboxChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="25. Event Management Prior Experience:" 
+                    <TextAreaWithCharCount 
+                      name="Event Management Prior Experience:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={15} 
-                      maxWords={200} 
                       placeholder="Detail previous events, school/college/university festivals, or projects you have organized or volunteered for..."
                       required 
                     />
@@ -449,23 +632,21 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 5: Decor & Arts Subdomain">
                     <CheckboxGroup 
-                      name="24. What skills do you have?" 
+                      name="What skills do you have?" 
                       options={["Arts & crafts", "Handmade decorations", "Stall decoration", "Props", "Backdrops", "Banners/sign boards physically", "Event venue setup", "Themed displays", "Creative installations", "Other"]} 
                       value={formData} 
                       onChange={handleCheckboxChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="26. Decor & Arts Prior Experience:" 
+                    <TextAreaWithCharCount 
+                      name="Decor & Arts Prior Experience:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={15} 
-                      maxWords={200} 
                       placeholder="Describe your craft, setup, or decorative work in detail..."
                       required 
                     />
                     <TextInput 
-                      name="25. Link to your previous work / portfolio (Drive/Instagram):" 
+                      name="Link to your previous work / portfolio (Drive/Instagram):" 
                       value={formData} 
                       onChange={handleChange} 
                       placeholder="https://drive.google.com/..."
@@ -480,23 +661,21 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 6: Media & Content Subdomain">
                     <CheckboxGroup 
-                      name="24. What tools/software are you comfortable using?" 
+                      name="What tools/software are you comfortable using?" 
                       options={["Canva", "Photoshop", "Illustrator", "CapCut", "Premiere Pro / After Effects", "Figma", "Photography", "Videography", "Graphic design", "Reels/Shorts", "Social media management", "Digital posters/carousels", "Other"]} 
                       value={formData} 
                       onChange={handleCheckboxChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="27. Media & Content Prior Experience:" 
+                    <TextAreaWithCharCount 
+                      name="Media & Content Prior Experience:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={15} 
-                      maxWords={200} 
                       placeholder="Describe your media experience, tools you work with daily, and videos/graphics you created..."
                       required 
                     />
                     <TextInput 
-                      name="25. Portfolio / Social Media link (Behance/Drive/Insta):" 
+                      name="Portfolio / Social Media link (Behance/Drive/Insta):" 
                       value={formData} 
                       onChange={handleChange} 
                       placeholder="https://..."
@@ -511,18 +690,16 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 7: Public Relations Subdomain">
                     <CheckboxGroup 
-                      name="24. Which areas are you comfortable with?" 
+                      name="Which areas are you comfortable with?" 
                       options={["Communication", "Public speaking", "Outreach", "Contacting organizations/societies", "Sponsorship & corporate liaisons", "Social media communication", "Networking", "Other"]} 
                       value={formData} 
                       onChange={handleCheckboxChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="28. Public Relations Prior Experience:" 
+                    <TextAreaWithCharCount 
+                      name="Public Relations Prior Experience:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={15} 
-                      maxWords={200} 
                       placeholder="Describe how you handle public communication, negotiations, sponsors, or inter-university liaisons..."
                       required 
                     />
@@ -536,25 +713,23 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 8: Content & Editorial Subdomain">
                     <CheckboxGroup 
-                      name="29. Which areas of editorial work interest you?" 
+                      name="Which areas of editorial work interest you?" 
                       options={["Science & research news", "University/local news & updates", "Articles & write-ups", "Newsletters", "Research summaries", "Event reports", "Other"]} 
                       value={formData} 
                       onChange={handleCheckboxChange} 
                       required 
                     />
                     <RadioGroup 
-                      name="30. What type of writing are you most comfortable with?" 
+                      name="What type of writing are you most comfortable with?" 
                       options={["Informative", "Formal/academic", "Creative", "Social media copy", "Willing to learn", "Other"]} 
                       value={formData} 
                       onChange={handleChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="31. Writing & Editorial Prior Experience / Sample:" 
+                    <TextAreaWithCharCount 
+                      name="Writing & Editorial Prior Experience / Sample:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={15} 
-                      maxWords={200} 
                       placeholder="Describe articles, blogs, newsletters, or reports you've written, or provide a brief writing sample..."
                       required 
                     />
@@ -568,36 +743,33 @@ export default function ApplicationForm() {
                 <div className="py-2">
                   <Section title="Section 9: Executive Leadership Role">
                     <RadioGroup 
-                      name="32. Confirm your target executive position:" 
+                      name="Confirm your target executive position:" 
                       options={["Vice President", "General Secretary"]} 
                       value={formData} 
                       onChange={handleChange} 
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="33. Why are you interested in taking an executive role in the Science Society?" 
+                    <TextAreaWithCharCount 
+                      name="Why are you interested in taking an executive role in the Science Society?" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={20} 
-                      maxWords={250} 
+                      minChars={20} 
                       placeholder="Explain your vision, motivation, and reasons for stepping up to executive leadership..."
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="34. What do you think you can contribute to the society in this role?" 
+                    <TextAreaWithCharCount 
+                      name="What do you think you can contribute to the society in this role?" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={20} 
-                      maxWords={250} 
+                      minChars={20} 
                       placeholder="Describe the tangible value, structure, or innovations you will bring..."
                       required 
                     />
-                    <TextAreaWithWordCount 
-                      name="36. Leadership & Management Prior Experience:" 
+                    <TextAreaWithCharCount 
+                      name="Leadership & Management Prior Experience:" 
                       value={formData} 
                       onChange={handleChange} 
-                      minWords={20} 
-                      maxWords={250} 
+                      minChars={20} 
                       placeholder="Describe previous leadership posts, society positions, or team management roles you have held..."
                       required 
                     />
@@ -607,11 +779,20 @@ export default function ApplicationForm() {
             )}
           </AnimatePresence>
 
-          {/* Section 10: Submission */}
-          <Section title="Section 10: Declaration & Submission">
+          {/* Section 10: Terms, Privacy & Declaration */}
+          <Section title="Section 10: Terms, Privacy & Consent">
+            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2.5 leading-relaxed">
+              <div className="font-semibold text-slate-800 text-sm">Data Privacy & Recruitment Consent</div>
+              <p>
+                By submitting this application, I confirm that all provided information is accurate and authentic. 
+                I hereby grant consent to the PAF-IAST Science Society Executive & Recruitment Committee to securely review, manage, and process my personal data, contact details, and application answers strictly for cabinet recruitment and interview evaluation purposes. 
+                The Society upholds strict privacy standards and will not disclose your personal details to any unauthorized third party.
+              </p>
+            </div>
+
             <RadioGroup 
-              name="37. By submitting this application, I understand that selection into the Science Society Cabinet is based on merit, interview evaluation, and commitment to active participation." 
-              options={["I Agree & Confirm", "I Do Not Agree"]} 
+              name="Consent Declaration: I agree to the terms, recruitment evaluation, and consent to my data being processed." 
+              options={["I Agree & Consent", "I Do Not Agree"]} 
               value={formData} 
               onChange={handleChange} 
               required 
@@ -727,21 +908,21 @@ function SemesterSelector({ name, value, onChange, required }: any) {
   );
 }
 
-function TextAreaWithWordCount({ 
+function TextAreaWithCharCount({ 
   name, 
   value, 
   onChange, 
   required, 
-  minWords = 15, 
-  maxWords = 200, 
+  minChars = 15, 
+  maxChars = 5000, 
   placeholder 
 }: any) {
   const text = value[name] || '';
-  const wordCount = countWords(text);
+  const charCount = text.length;
   
-  const isTooShort = text.trim().length > 0 && wordCount < minWords;
-  const isTooLong = wordCount > maxWords;
-  const isValid = wordCount >= minWords && wordCount <= maxWords;
+  const isTooShort = text.trim().length > 0 && charCount < minChars;
+  const isTooLong = charCount > maxChars;
+  const isValid = charCount >= minChars && charCount <= maxChars;
 
   return (
     <div>
@@ -751,13 +932,13 @@ function TextAreaWithWordCount({
         </label>
         <div className="text-xs font-medium">
           {text.trim().length === 0 ? (
-            <span className="text-slate-400 font-medium">Limit: {minWords}–{maxWords} words</span>
+            <span className="text-slate-400 font-medium">15–5,000 characters</span>
           ) : isTooShort ? (
-            <span className="text-amber-600 font-semibold">{wordCount} / {minWords} min ({minWords - wordCount} more words needed)</span>
+            <span className="text-amber-600 font-semibold">{charCount} / {minChars} min ({minChars - charCount} more characters needed)</span>
           ) : isTooLong ? (
-            <span className="text-red-600 font-semibold">{wordCount} / {maxWords} max (Exceeded by {wordCount - maxWords})</span>
+            <span className="text-red-600 font-semibold">{charCount} / {maxChars} max (Exceeded by {charCount - maxChars})</span>
           ) : (
-            <span className="text-emerald-600 font-semibold">✓ {wordCount} words (Valid length)</span>
+            <span className="text-emerald-600 font-semibold">✓ {charCount.toLocaleString()} / {maxChars.toLocaleString()} characters</span>
           )}
         </div>
       </div>
@@ -766,6 +947,7 @@ function TextAreaWithWordCount({
         onChange={(e) => onChange(name, e.target.value)}
         required={required}
         rows={4}
+        maxLength={maxChars + 50}
         className={clsx(
           "w-full px-4 py-3 rounded-xl border bg-white/70 focus:bg-white outline-none transition-all resize-y text-sm",
           isTooLong 
@@ -774,11 +956,11 @@ function TextAreaWithWordCount({
             ? "border-emerald-300 focus:ring-2 focus:ring-emerald-100" 
             : "border-slate-200 focus:ring-2 focus:ring-[#0056A8]/20 focus:border-[#0056A8]"
         )}
-        placeholder={placeholder || `Write your response here (between ${minWords} and ${maxWords} words)...`}
+        placeholder={placeholder || `Write your response here (minimum 15 characters, maximum 5,000 characters)...`}
       />
       <div className="flex justify-between items-center mt-1 text-[11px] text-slate-400">
-        <span>Minimum: {minWords} words</span>
-        <span>Maximum: {maxWords} words</span>
+        <span>Minimum: {minChars} characters</span>
+        <span>Maximum: {maxChars.toLocaleString()} characters</span>
       </div>
     </div>
   );

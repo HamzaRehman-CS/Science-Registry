@@ -104,29 +104,44 @@ export default function AdminDashboard() {
       'Program', 
       'Semester', 
       'Applied Position', 
-      'Email', 
-      'Phone', 
+      'Phone Number', 
+      'Email Address',
+      'Province / Area',
+      'City',
+      'Street / Hostel Address',
       'Submission Date'
     ];
+
+    const sanitize = (val: string | null | undefined) => {
+      const clean = (val || '').toString().replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, ' ').trim();
+      return `"${clean}"`;
+    };
+
     const rows = applications.map(app => {
       const answers = app.answers || {};
-      const cnic = answers['2. CNIC / B-Form Number'] || answers._cnic || '';
-      const email = answers['3. Email address'] || answers['2. Email address'] || '';
-      const phone = answers['4. Phone number / WhatsApp'] || answers['3. Phone number'] || '';
-      const dept = answers['6. Department'] || answers._department || app.department || '';
-      const prog = answers['7. Degree / Program'] || answers._program || '';
+      const cnic = answers['CNIC / B-Form Number'] || answers['2. CNIC / B-Form Number'] || answers._cnic || '';
+      const email = answers['Email address'] || answers['3. Email address'] || answers['2. Email address'] || '';
+      const phone = answers['Phone Number / WhatsApp'] || answers['4. Phone number / WhatsApp'] || answers._phone || '';
+      const dept = answers['Department'] || answers['6. Department'] || answers._department || app.department || '';
+      const prog = answers['Degree / Program'] || answers['7. Degree / Program'] || answers._program || '';
+      const province = answers['Province / Region'] || answers._province || '';
+      const city = answers['City'] || answers._city || '';
+      const streetAddress = answers['Street / Hostel Address'] || answers._streetAddress || '';
 
       return [
-        `"${(app.applicant_name || '').replace(/"/g, '""')}"`,
-        `"${cnic.replace(/"/g, '""')}"`,
-        `"${(app.registration_number || '').replace(/"/g, '""')}"`,
-        `"${dept.replace(/"/g, '""')}"`,
-        `"${prog.replace(/"/g, '""')}"`,
-        `"${(app.semester || '').replace(/"/g, '""')}"`,
-        `"${(app.applied_position || '').replace(/"/g, '""')}"`,
-        `"${email.replace(/"/g, '""')}"`,
-        `"${phone.replace(/"/g, '""')}"`,
-        `"${new Date(app.created_at).toLocaleString()}"`
+        sanitize(app.applicant_name),
+        sanitize(cnic),
+        sanitize(app.registration_number),
+        sanitize(dept),
+        sanitize(prog),
+        sanitize(app.semester),
+        sanitize(app.applied_position),
+        sanitize(phone),
+        sanitize(email),
+        sanitize(province),
+        sanitize(city),
+        sanitize(streetAddress),
+        sanitize(new Date(app.created_at).toLocaleString())
       ];
     });
 
@@ -139,6 +154,7 @@ export default function AdminDashboard() {
     link.click();
     document.body.removeChild(link);
   };
+
 
 
   const filteredApps = applications.filter(app => {
@@ -506,7 +522,19 @@ export default function AdminDashboard() {
                     <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
                       <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Phone / WhatsApp</div>
                       <div className="font-semibold text-slate-900 text-xs">
-                        {selectedApp.answers?.['4. Phone number / WhatsApp'] || selectedApp.answers?.['3. Phone number'] || 'N/A'}
+                        {selectedApp.answers?.['Phone Number / WhatsApp'] || selectedApp.answers?.['4. Phone number / WhatsApp'] || selectedApp.answers?._phone || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Province & City</div>
+                      <div className="font-semibold text-slate-900 text-xs">
+                        {selectedApp.answers?.['City'] || selectedApp.answers?._city || ''}{selectedApp.answers?.['Province / Region'] || selectedApp.answers?._province ? `, ${selectedApp.answers?.['Province / Region'] || selectedApp.answers?._province}` : 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50 col-span-2">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Street / Hostel Address</div>
+                      <div className="font-semibold text-slate-900 text-xs">
+                        {selectedApp.answers?.['Street / Hostel Address'] || selectedApp.answers?._streetAddress || 'N/A'}
                       </div>
                     </div>
                   </div>
