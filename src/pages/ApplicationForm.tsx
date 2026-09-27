@@ -136,6 +136,23 @@ export default function ApplicationForm() {
     try {
       const applicantName = formData['Your full name'];
       const regNo = formData['Registration Number'];
+
+      // Prevent duplicate submissions by Registration Number
+      const cleanRegNo = (regNo || '').trim().toLowerCase();
+      if (cleanRegNo) {
+        const { data: existingApp } = await supabase
+          .from('applications')
+          .select('id')
+          .ilike('registration_number', cleanRegNo)
+          .limit(1);
+
+        if (existingApp && existingApp.length > 0) {
+          setError(`An application with Registration Number "${regNo}" has already been submitted. Multiple submissions are not allowed.`);
+          setSubmitting(false);
+          window.scrollTo({ top: 350, behavior: 'smooth' });
+          return;
+        }
+      }
       const department = formData['Department'];
       const program = formData['Degree / Program'];
       const semester = formData['Semester'];

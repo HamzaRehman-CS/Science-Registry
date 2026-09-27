@@ -59,7 +59,17 @@ export default function AdminDashboard() {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setApplications(data);
+      // Deduplicate applications by registration_number (keep most recent)
+      const seenReg = new Set();
+      const uniqueApps: any[] = [];
+      for (const app of data) {
+        const key = (app.registration_number || '').trim().toLowerCase() || app.id;
+        if (!seenReg.has(key)) {
+          seenReg.add(key);
+          uniqueApps.push(app);
+        }
+      }
+      setApplications(uniqueApps);
     }
     setLoading(false);
   };
