@@ -96,15 +96,39 @@ export default function AdminDashboard() {
 
   const exportToCSV = () => {
     if (applications.length === 0) return;
-    const headers = ['Applicant Name', 'Registration Number', 'Department', 'Semester', 'Applied Position', 'Submission Date'];
-    const rows = applications.map(app => [
-      `"${(app.applicant_name || '').replace(/"/g, '""')}"`,
-      `"${(app.registration_number || '').replace(/"/g, '""')}"`,
-      `"${(app.department || '').replace(/"/g, '""')}"`,
-      `"${(app.semester || '').replace(/"/g, '""')}"`,
-      `"${(app.applied_position || '').replace(/"/g, '""')}"`,
-      `"${new Date(app.created_at).toLocaleString()}"`
-    ]);
+    const headers = [
+      'Applicant Name', 
+      'CNIC', 
+      'Registration Number', 
+      'Department', 
+      'Program', 
+      'Semester', 
+      'Applied Position', 
+      'Email', 
+      'Phone', 
+      'Submission Date'
+    ];
+    const rows = applications.map(app => {
+      const answers = app.answers || {};
+      const cnic = answers['2. CNIC / B-Form Number'] || answers._cnic || '';
+      const email = answers['3. Email address'] || answers['2. Email address'] || '';
+      const phone = answers['4. Phone number / WhatsApp'] || answers['3. Phone number'] || '';
+      const dept = answers['6. Department'] || answers._department || app.department || '';
+      const prog = answers['7. Degree / Program'] || answers._program || '';
+
+      return [
+        `"${(app.applicant_name || '').replace(/"/g, '""')}"`,
+        `"${cnic.replace(/"/g, '""')}"`,
+        `"${(app.registration_number || '').replace(/"/g, '""')}"`,
+        `"${dept.replace(/"/g, '""')}"`,
+        `"${prog.replace(/"/g, '""')}"`,
+        `"${(app.semester || '').replace(/"/g, '""')}"`,
+        `"${(app.applied_position || '').replace(/"/g, '""')}"`,
+        `"${email.replace(/"/g, '""')}"`,
+        `"${phone.replace(/"/g, '""')}"`,
+        `"${new Date(app.created_at).toLocaleString()}"`
+      ];
+    });
 
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
@@ -115,6 +139,7 @@ export default function AdminDashboard() {
     link.click();
     document.body.removeChild(link);
   };
+
 
   const filteredApps = applications.filter(app => {
     const term = search.toLowerCase();
@@ -459,7 +484,13 @@ export default function AdminDashboard() {
                       <div className="font-semibold text-slate-900 text-sm">{selectedApp.registration_number}</div>
                     </div>
                     <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><BookOpen className="w-3.5 h-3.5 mr-1.5" /> Department</div>
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><User className="w-3.5 h-3.5 mr-1.5" /> CNIC / B-Form</div>
+                      <div className="font-semibold text-slate-900 text-sm">
+                        {selectedApp.answers?.['2. CNIC / B-Form Number'] || selectedApp.answers?._cnic || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><BookOpen className="w-3.5 h-3.5 mr-1.5" /> Department / Program</div>
                       <div className="font-semibold text-slate-900 text-sm">{selectedApp.department}</div>
                     </div>
                     <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
@@ -467,8 +498,16 @@ export default function AdminDashboard() {
                       <div className="font-semibold text-slate-900 text-sm">{selectedApp.semester}</div>
                     </div>
                     <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
-                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium"><Calendar className="w-3.5 h-3.5 mr-1.5" /> Applied On</div>
-                      <div className="font-semibold text-slate-900 text-sm">{new Date(selectedApp.created_at).toLocaleString()}</div>
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Email Address</div>
+                      <div className="font-semibold text-slate-900 text-xs truncate">
+                        {selectedApp.answers?.['3. Email address'] || selectedApp.answers?.['2. Email address'] || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50">
+                      <div className="flex items-center text-slate-500 mb-1 text-xs font-medium">Phone / WhatsApp</div>
+                      <div className="font-semibold text-slate-900 text-xs">
+                        {selectedApp.answers?.['4. Phone number / WhatsApp'] || selectedApp.answers?.['3. Phone number'] || 'N/A'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -477,7 +516,9 @@ export default function AdminDashboard() {
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Form Questions & Answers</h4>
                   <div className="absolute left-0 top-7 bottom-0 w-px bg-slate-200 ml-3"></div>
                   
-                  {selectedApp.answers && Object.entries(selectedApp.answers).map(([question, answer]: [string, any], index) => (
+                  {selectedApp.answers && Object.entries(selectedApp.answers)
+                    .filter(([key]) => !key.startsWith('_'))
+                    .map(([question, answer]: [string, any], index) => (
                     <div key={index} className="relative pl-9">
                       <div className="absolute left-0 w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-xs">
                         {index + 1}
@@ -499,6 +540,7 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+
 
                 {/* Bottom Delete Button inside drawer */}
                 <div className="mt-10 pt-6 border-t border-slate-200">
