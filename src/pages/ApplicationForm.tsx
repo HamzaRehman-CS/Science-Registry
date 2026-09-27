@@ -49,7 +49,7 @@ export default function ApplicationForm() {
       // Male applicants can apply for Vice President (not General Secretary)
       if (name === 'What gender do you identify as?') {
         const currentTeam = updated['Which team are you registering for?'];
-        if (value === 'Female' && currentTeam === 'Vice President ( male )') {
+        if (value === 'Female' && (currentTeam === 'Vice President' || currentTeam === 'Vice President ( male )')) {
           delete updated['Which team are you registering for?'];
         } else if (value === 'Male' && currentTeam === 'General Secretary') {
           delete updated['Which team are you registering for?'];
@@ -81,8 +81,8 @@ export default function ApplicationForm() {
   const availableTeams = selectedGender === 'Female'
     ? [...BASE_TEAMS, "General Secretary"]
     : selectedGender === 'Male'
-    ? [...BASE_TEAMS, "Vice President ( male )"]
-    : [...BASE_TEAMS, "General Secretary", "Vice President ( male )"];
+    ? [...BASE_TEAMS, "Vice President"]
+    : [...BASE_TEAMS, "General Secretary", "Vice President"];
 
   const selectedTeam = formData['Which team are you registering for?'];
   const isMemberOfOtherSociety = formData['Are you currently a member of any other university society/organization?'] === 'Yes';
@@ -109,7 +109,7 @@ export default function ApplicationForm() {
       charLimitFields.push('Public Relations Prior Experience:');
     } else if (selectedTeam === "Content & Editorial") {
       charLimitFields.push('Writing & Editorial Prior Experience / Sample:');
-    } else if (selectedTeam === "General Secretary" || selectedTeam === "Vice President ( male )") {
+    } else if (selectedTeam === "General Secretary" || selectedTeam === "Vice President" || selectedTeam === "Vice President ( male )") {
       charLimitFields.push(
         'Why are you interested in taking an executive role in the Science Society?',
         'How do you think you can contribute to the society in this role?',
@@ -515,28 +515,13 @@ export default function ApplicationForm() {
 
           {/* Teams & Prior Experience */}
           <Section title="Team Selection & Experience">
-            <div>
-              <RadioGroup 
-                name="Which team are you registering for?" 
-                options={availableTeams} 
-                value={formData} 
-                onChange={handleChange} 
-                required 
-              />
-              {selectedGender === 'Female' ? (
-                <p className="text-xs text-blue-700 bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 mt-2.5">
-                  Showing eligible teams for female applicants (General Secretary is exclusive to female candidates).
-                </p>
-              ) : selectedGender === 'Male' ? (
-                <p className="text-xs text-blue-700 bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 mt-2.5">
-                  Showing eligible teams for male applicants (Vice President is exclusive to male candidates).
-                </p>
-              ) : (
-                <p className="text-xs text-amber-700 bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 mt-2.5">
-                  💡 Note: Select your gender in Personal Details to see gender-specific executive roles (Vice President for male candidates, General Secretary for female candidates).
-                </p>
-              )}
-            </div>
+            <RadioGroup 
+              name="Which team are you registering for?" 
+              options={availableTeams} 
+              value={formData} 
+              onChange={handleChange} 
+              required 
+            />
 
             <TextInput 
               name="What is your second-choice team?" 
@@ -706,7 +691,7 @@ export default function ApplicationForm() {
               </motion.div>
             )}
 
-            {(selectedTeam === "General Secretary" || selectedTeam === "Vice President ( male )") && (
+            {(selectedTeam === "General Secretary" || selectedTeam === "Vice President" || selectedTeam === "Vice President ( male )") && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
                   <Section title="Executive Leadership Role">

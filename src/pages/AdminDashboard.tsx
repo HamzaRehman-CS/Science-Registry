@@ -31,7 +31,7 @@ const TEAMS = [
   "Public Relations (PR)",
   "Content & Editorial",
   "General Secretary",
-  "Vice President ( male )"
+  "Vice President"
 ];
 
 export default function AdminDashboard() {
@@ -239,7 +239,9 @@ export default function AdminDashboard() {
       (app.applied_position && app.applied_position.toLowerCase().includes(term)) ||
       (app.department && app.department.toLowerCase().includes(term));
 
-    const matchesTeam = selectedTeam === 'All Teams' || app.applied_position === selectedTeam;
+    const matchesTeam = selectedTeam === 'All Teams' 
+      || app.applied_position === selectedTeam
+      || (selectedTeam === 'Vice President' && app.applied_position === 'Vice President ( male )');
 
     return matchesSearch && matchesTeam;
   });
@@ -891,10 +893,10 @@ export default function AdminDashboard() {
                           )}
 
                           {/* Executive Leadership */}
-                          {(selectedApp.applied_position === "General Secretary" || selectedApp.applied_position === "Vice President ( male )" || answers['Confirm your target executive position:']) && (
+                          {(selectedApp.applied_position === "General Secretary" || selectedApp.applied_position === "Vice President" || selectedApp.applied_position === "Vice President ( male )" || answers['Confirm your target executive position:']) && (
                             <DetailTile 
                               label="Confirmed Executive Position" 
-                              value={selectedApp.applied_position || answers['Confirm your target executive position:']} 
+                              value={selectedApp.applied_position === 'Vice President ( male )' ? 'Vice President' : (selectedApp.applied_position || answers['Confirm your target executive position:'])} 
                             />
                           )}
                           {answers['Why are you interested in taking an executive role in the Science Society?'] && (
