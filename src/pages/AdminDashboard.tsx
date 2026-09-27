@@ -129,6 +129,7 @@ export default function AdminDashboard() {
       'Detailed Prior Experience',
       'Awards / Certificates',
       'Subdomain Experience / Sample',
+      'Executive Role Contribution',
       'Portfolio Link',
       'Consent Declaration',
       'Submission Date'
@@ -173,6 +174,10 @@ export default function AdminDashboard() {
         answers['Writing & Editorial Prior Experience / Sample:'] ||
         answers['Leadership & Management Prior Experience:'] || '';
 
+      const execContribution = 
+        answers['How do you think you can contribute to the society in this role?'] ||
+        answers['What do you think you can contribute to the society in this role?'] || '';
+
       const portfolio = 
         answers['Link to your previous work / portfolio (Drive/Instagram):'] ||
         answers['Portfolio / Social Media link (Behance/Drive/Insta):'] || '';
@@ -207,6 +212,7 @@ export default function AdminDashboard() {
         sanitize(priorExp),
         sanitize(awards),
         sanitize(subdomainExp),
+        sanitize(execContribution),
         sanitize(portfolio),
         sanitize(consent),
         sanitize(new Date(app.created_at).toLocaleString())
@@ -606,6 +612,7 @@ export default function AdminDashboard() {
                     'Confirm your target executive position:',
                     'Why are you interested in taking an executive role in the Science Society?',
                     'What do you think you can contribute to the society in this role?',
+                    'How do you think you can contribute to the society in this role?',
                     'Leadership & Management Prior Experience:',
                     'Consent Declaration: I agree to the terms, recruitment evaluation, and consent to my data being processed.',
                     'Declaration: I confirm that all the information provided is accurate and true.'
@@ -632,6 +639,7 @@ export default function AdminDashboard() {
                     answers['Confirm your target executive position:'] ||
                     answers['Why are you interested in taking an executive role in the Science Society?'] ||
                     answers['What do you think you can contribute to the society in this role?'] ||
+                    answers['How do you think you can contribute to the society in this role?'] ||
                     answers['Leadership & Management Prior Experience:']
                   );
 
@@ -883,10 +891,10 @@ export default function AdminDashboard() {
                           )}
 
                           {/* Executive Leadership */}
-                          {answers['Confirm your target executive position:'] && (
+                          {(selectedApp.applied_position === "General Secretary" || selectedApp.applied_position === "Vice President ( male )" || answers['Confirm your target executive position:']) && (
                             <DetailTile 
-                              label="Confirmed Target Executive Role" 
-                              value={answers['Confirm your target executive position:']} 
+                              label="Confirmed Executive Position" 
+                              value={selectedApp.applied_position || answers['Confirm your target executive position:']} 
                             />
                           )}
                           {answers['Why are you interested in taking an executive role in the Science Society?'] && (
@@ -895,10 +903,10 @@ export default function AdminDashboard() {
                               answer={answers['Why are you interested in taking an executive role in the Science Society?']} 
                             />
                           )}
-                          {answers['What do you think you can contribute to the society in this role?'] && (
+                          {(answers['How do you think you can contribute to the society in this role?'] || answers['What do you think you can contribute to the society in this role?']) && (
                             <QuestionAnswerBlock 
-                              question="What do you think you can contribute to the society in this role?" 
-                              answer={answers['What do you think you can contribute to the society in this role?']} 
+                              question="How do you think you can contribute to the society in this role?" 
+                              answer={answers['How do you think you can contribute to the society in this role?'] || answers['What do you think you can contribute to the society in this role?']} 
                             />
                           )}
                           {answers['Leadership & Management Prior Experience:'] && (

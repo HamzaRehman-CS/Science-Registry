@@ -4,14 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 import clsx from 'clsx';
 
-const TEAMS = [
+const BASE_TEAMS = [
   "Event Management",
   "Media & Content",
   "Decor & Arts",
   "Public Relations (PR)",
-  "Content & Editorial",
-  "General Secretary",
-  "Vice President ( male )"
+  "Content & Editorial"
 ];
 
 const PROVINCES = [
@@ -45,6 +43,19 @@ export default function ApplicationForm() {
   const handleChange = (name: string, value: any) => {
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
+
+      // Gender-based role restriction:
+      // Female applicants can apply for General Secretary (not Vice President)
+      // Male applicants can apply for Vice President (not General Secretary)
+      if (name === 'What gender do you identify as?') {
+        const currentTeam = updated['Which team are you registering for?'];
+        if (value === 'Female' && currentTeam === 'Vice President ( male )') {
+          delete updated['Which team are you registering for?'];
+        } else if (value === 'Male' && currentTeam === 'General Secretary') {
+          delete updated['Which team are you registering for?'];
+        }
+      }
+
       try {
         localStorage.setItem('paf_ss_form_draft', JSON.stringify(updated));
       } catch (e) {}
@@ -66,6 +77,12 @@ export default function ApplicationForm() {
     });
   };
 
+  const selectedGender = formData['What gender do you identify as?'];
+  const availableTeams = selectedGender === 'Female'
+    ? [...BASE_TEAMS, "General Secretary"]
+    : selectedGender === 'Male'
+    ? [...BASE_TEAMS, "Vice President ( male )"]
+    : [...BASE_TEAMS, "General Secretary", "Vice President ( male )"];
 
   const selectedTeam = formData['Which team are you registering for?'];
   const isMemberOfOtherSociety = formData['Are you currently a member of any other university society/organization?'] === 'Yes';
@@ -95,7 +112,7 @@ export default function ApplicationForm() {
     } else if (selectedTeam === "General Secretary" || selectedTeam === "Vice President ( male )") {
       charLimitFields.push(
         'Why are you interested in taking an executive role in the Science Society?',
-        'What do you think you can contribute to the society in this role?',
+        'How do you think you can contribute to the society in this role?',
         'Leadership & Management Prior Experience:'
       );
     }
@@ -498,13 +515,28 @@ export default function ApplicationForm() {
 
           {/* Teams & Prior Experience */}
           <Section title="Team Selection & Experience">
-            <RadioGroup 
-              name="Which team are you registering for?" 
-              options={TEAMS} 
-              value={formData} 
-              onChange={handleChange} 
-              required 
-            />
+            <div>
+              <RadioGroup 
+                name="Which team are you registering for?" 
+                options={availableTeams} 
+                value={formData} 
+                onChange={handleChange} 
+                required 
+              />
+              {selectedGender === 'Female' ? (
+                <p className="text-xs text-blue-700 bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 mt-2.5">
+                  Showing eligible teams for female applicants (General Secretary is exclusive to female candidates).
+                </p>
+              ) : selectedGender === 'Male' ? (
+                <p className="text-xs text-blue-700 bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 mt-2.5">
+                  Showing eligible teams for male applicants (Vice President is exclusive to male candidates).
+                </p>
+              ) : (
+                <p className="text-xs text-amber-700 bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 mt-2.5">
+                  💡 Note: Select your gender in Personal Details to see gender-specific executive roles (Vice President for male candidates, General Secretary for female candidates).
+                </p>
+              )}
+            </div>
 
             <TextInput 
               name="What is your second-choice team?" 
@@ -678,13 +710,16 @@ export default function ApplicationForm() {
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="py-2">
                   <Section title="Executive Leadership Role">
-                    <RadioGroup 
-                      name="Confirm your target executive position:" 
-                      options={["Vice President", "General Secretary"]} 
-                      value={formData} 
-                      onChange={handleChange} 
-                      required 
-                    />
+                    <div className="p-4 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <div className="text-xs text-slate-500 font-medium">Executive Role:</div>
+                        <div className="text-base font-bold text-slate-900 mt-0.5">{selectedTeam}</div>
+                      </div>
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#0056A8] text-white shadow-2xs">
+                        Cabinet 2026–27
+                      </span>
+                    </div>
+
                     <TextAreaWithCharCount 
                       name="Why are you interested in taking an executive role in the Science Society?" 
                       value={formData} 
@@ -694,7 +729,7 @@ export default function ApplicationForm() {
                       required 
                     />
                     <TextAreaWithCharCount 
-                      name="What do you think you can contribute to the society in this role?" 
+                      name="How do you think you can contribute to the society in this role?" 
                       value={formData} 
                       onChange={handleChange} 
                       minChars={20} 
