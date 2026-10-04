@@ -204,6 +204,30 @@ export default function ApplicationForm() {
     }
   };
 
+  // Applications Closed Early Return
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md w-full bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 text-center shadow-xl"
+      >
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <img src="/science_society_logo.png" alt="Science Society" className="h-12 w-auto object-contain" />
+          <div className="h-10 w-px bg-slate-200"></div>
+          <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-14 w-auto object-contain" />
+        </div>
+        <div className="w-16 h-16 bg-blue-50 text-[#0056A8] rounded-full flex items-center justify-center mx-auto mb-5 shadow-xs">
+          <AlertCircle className="w-9 h-9" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Applications Closed</h2>
+        <p className="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
+          The application timeline for this semester is now closed. Thank you for your interest in joining the PAF-IAST Science Society. Please try again next semester!
+        </p>
+      </motion.div>
+    </div>
+  );
+
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
