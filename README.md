@@ -1,34 +1,50 @@
-# PAF-IAST Science Society - Student Recruitment Portal
+# PAF-IAST Science Society - Secret Roast & Toast Vault 🧪
 
-Production-ready student recruitment and cabinet application system for the PAF-IAST Science Society (2026–27).
-
----
-
-## Features
-- **Student Application Portal (`/`)**: 
-  - Section 1: Personal Details
-  - Section 2: General Application Questions
-  - Section 3: Team-Specific Conditional Questions (Event Management, Media & Content, Decor & Arts, PR, Content & Editorial, General Secretary, Vice President Male)
-  - Direct live submission to Supabase cloud database
-- **Admin Application Viewer (`/admin`)**:
-  - Secure authentication (Admin ID: `PAFSS26`, Password: `register`)
-  - Real-time search across name, registration number, or position
-  - Modal view to read entire submission data
-  - Immutable application records
-- **Single Deployment**:
-  - Both the public application form and the private admin dashboard run on the exact same Vercel deployment with built-in SPA rewrites.
+An anonymous, interactive fun activity platform for the PAF-IAST Science Society where members can drop playful roasts, heartwarming appreciation, campus tea, and inside jokes about any society member or cabinet post.
 
 ---
 
-## Deployment to Vercel
+## 🌟 Features
 
-1. Push or import this repository into your [Vercel](https://vercel.com) account.
-2. Under **Project Settings > Environment Variables**, add:
-   - `VITE_SUPABASE_URL`: `https://xqhdznhjvgcsguclktsg.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY`: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxaGR6bmhqdmdjc2d1Y2xrdHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0MTIsImV4cCI6MjEwNjAxMzQxMn0.x3GeSz_UnraP70ul90jqr59mgV17_p4l41ke4te5yqA`
-3. Click **Deploy**.
+- **Public Roast & Toast Portal (`/`)**:
+  - Interactive target selection (cabinet roles, committee leads, or custom member names)
+  - Role/Designation tagger (President, Event Lead, Chai In-charge, etc.)
+  - Vibe Selector:
+    - 🔥 Spicy Roast
+    - 💖 Sweet Toast & Appreciation
+    - ☕ Spilling Tea & Campus Banter
+    - 😂 Inside Joke
+    - 🍿 Unpopular Opinion
+  - Random Prompt Generator (click 🎲 for funny prompt ideas)
+  - 100% Anonymous: No names, emails, IP addresses, or tracking cookies collected.
+
+- **Admin Secret Vault (`/admin`)**:
+  - Secure login:
+    - **Admin ID**: `PAFSS26`
+    - **Password**: `register`
+  - Real-time comment stream from Supabase
+  - Shows **only** the target member's name, post, vibe, comment, and timestamp (Strictly zero author identity)
+  - Filter by vibe, search by member name or keyword
+  - Quick-copy comment text
+  - Moderation / Delete comment action
+  - CSV Export for presentation at society events
 
 ---
 
-## Database Setup (Supabase)
-The database schema and Row Level Security policies are located in `supabase_schema.sql`.
+## 🚀 Running Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Visit the local server:
+- Portal: `http://localhost:5173/`
+- Admin: `http://localhost:5173/admin`
+
+---
+
+## 🔐 Admin Credentials
+
+- **Admin ID**: `PAFSS26` (or `pafss26@society.com`)
+- **Password**: `register`
