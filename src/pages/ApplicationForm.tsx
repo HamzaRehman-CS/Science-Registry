@@ -12,7 +12,6 @@ import {
   Briefcase, 
   Video, 
   Users, 
-  Share2, 
   ShieldCheck, 
   Sparkles,
   Globe,
@@ -43,12 +42,6 @@ const EXECUTIVE_POSITIONS: ExecutivePosition[] = [
     title: "Vice President (Female)", 
     desc: "Executive co-head of community governance, representing female students and guiding overall vision.",
     femaleOnly: true
-  },
-  { 
-    id: "General Secretary", 
-    title: "General Secretary", 
-    desc: "Core executive administrator handling official documentation, cabinet communications, and cross-team execution.",
-    femaleOnly: false
   }
 ];
 
@@ -62,11 +55,6 @@ const DIRECTOR_POSITIONS = [
     id: "Director Marketing & Communications",
     title: "Director of Marketing & Communications",
     desc: "Leading branding, social media, promotion campaigns, graphic design, and video content."
-  },
-  {
-    id: "Director Community & Public Relations",
-    title: "Director of Community & Public Relations",
-    desc: "Leading corporate sponsorships, industry speaker relations, and student outreach."
   },
   {
     id: "Director Learning & Projects",
@@ -192,7 +180,6 @@ export default function ApplicationForm() {
     if (!formData['Degree / Program']?.trim()) return "Please enter your degree / program (e.g. BS Data Science, BS CS).";
     if (!formData['Semester']) return "Please select your current semester.";
     if (!formData['What gender do you identify as?']) return "Please specify your gender.";
-    if (!formData['Date of birth']) return "Please enter your date of birth.";
     return null;
   };
 
@@ -206,13 +193,6 @@ export default function ApplicationForm() {
     if (!formData['What is your second-choice position?']?.trim()) {
       return "Please indicate your second-choice position preference.";
     }
-    if (!formData['What is your current skill level in this domain?']) {
-      return "Please select your current skill level in this domain.";
-    }
-    const exp = (formData['Detailed prior experience related to this position/team:'] || '').trim();
-    if (exp.length < 15) {
-      return "Please provide at least 15 characters describing your prior experience (or genuine enthusiasm for beginners).";
-    }
     return null;
   };
 
@@ -220,18 +200,11 @@ export default function ApplicationForm() {
   const validateStep3 = () => {
     setError(null);
     const motJoin = (formData['Why do you want to join the PAF-IAST Data Science Community?'] || '').trim();
-    if (motJoin.length < 15) {
-      return "Please provide at least 15 characters explaining why you want to join the Data Science Community.";
-    }
-    const motDrive = (formData['What is your biggest personal motivation to contribute?'] || '').trim();
-    if (motDrive.length < 15) {
-      return "Please provide at least 15 characters describing your personal motivation.";
+    if (motJoin.length < 10) {
+      return "Please tell us briefly why you want to join the Data Science Community.";
     }
     if (!formData['Would you be able to participate in competitions/hackathons?']) {
       return "Please indicate your hackathon / competition participation availability.";
-    }
-    if (!formData['Would you be able to travel for conferences/events?']) {
-      return "Please indicate your travel availability for conferences/events.";
     }
     if (!formData['Are you willing to attend meetings and complete tasks within deadlines?']) {
       return "Please confirm your commitment to attend meetings and meet deadlines.";
@@ -280,12 +253,12 @@ export default function ApplicationForm() {
     }
 
     // Role-specific check if fields exist
-    const isExec = selectedPosition === 'Vice President Female' || selectedPosition === 'General Secretary';
+    const isExec = selectedPosition === 'Vice President Female';
     const isDirector = selectedPosition && selectedPosition.startsWith('Director');
 
-    // Portfolio link requirement for Exec & Directors
+    // Portfolio link requirement for Exec & Directors (recommended for leadership evaluation)
     if ((isExec || isDirector) && !formData['Portfolio / Website / Work Showcase Link:']?.trim() && !formData['LinkedIn Profile URL:']?.trim()) {
-      setError("Please provide at least your LinkedIn profile or Portfolio / Work Showcase link for leadership consideration.");
+      setError("Please provide your LinkedIn profile or Portfolio / Work Showcase link for leadership consideration.");
       setSubmitting(false);
       window.scrollTo({ top: 240, behavior: 'smooth' });
       return;
@@ -304,13 +277,13 @@ export default function ApplicationForm() {
       degree_program: formData['Degree / Program'],
       semester: formData['Semester'],
       gender: selectedGender,
-      date_of_birth: formData['Date of birth'],
+      date_of_birth: formData['Date of birth'] || '',
       applied_category: getPositionCategory(selectedPosition),
       applied_position: selectedPosition,
       second_choice_position: formData['What is your second-choice position?'] || '',
-      skill_level: formData['What is your current skill level in this domain?'] || 'Beginner',
+      skill_level: formData['What is your current skill level in this domain?'] || 'Community Member',
       motivation_join: formData['Why do you want to join the PAF-IAST Data Science Community?'] || '',
-      motivation_drive: formData['What is your biggest personal motivation to contribute?'] || '',
+      motivation_drive: formData['What is your biggest personal motivation to contribute?'] || formData['Why do you want to join the PAF-IAST Data Science Community?'] || '',
       can_participate_competitions: formData['Would you be able to participate in competitions/hackathons?'] || 'Yes',
       can_travel: formData['Would you be able to travel for conferences/events?'] || 'Yes',
       willing_commit_deadlines: formData['Are you willing to attend meetings and complete tasks within deadlines?'] || 'Yes',
@@ -647,19 +620,11 @@ export default function ApplicationForm() {
                   required 
                 />
 
-                {/* Gender and Date of Birth (No residential location) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-1">
+                {/* Gender Identification */}
+                <div className="pt-1">
                   <RadioGroup 
                     name="What gender do you identify as?" 
                     options={["Female", "Male"]} 
-                    value={formData} 
-                    onChange={handleChange} 
-                    required 
-                  />
-
-                  <TextInput 
-                    name="Date of birth" 
-                    type="date" 
                     value={formData} 
                     onChange={handleChange} 
                     required 
@@ -809,89 +774,16 @@ export default function ApplicationForm() {
                   />
                 </div>
 
-                {/* NOT SQUEEZED: Skill Level gets its own full spacious card */}
-                <div className="pt-2">
-                  <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
-                    <label className="block text-[14px] font-semibold text-slate-800">
-                      What is your current skill level in this domain? <span className="text-red-500">*</span>
-                    </label>
-                    <p className="text-xs text-slate-500 -mt-1 mb-2">
-                      Be genuine! We warmly welcome all levels, from motivated freshmen to senior specialists.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        { id: "Beginner", title: "Beginner", desc: "Eager to learn, passionate, and ready to contribute." },
-                        { id: "Intermediate", title: "Intermediate", desc: "Comfortable with fundamentals and past minor projects." },
-                        { id: "Advanced", title: "Advanced", desc: "Solid hands-on expertise and independent execution." },
-                        { id: "Expert", title: "Expert", desc: "Extensive project track record and capable of mentoring others." }
-                      ].map(lvl => {
-                        const isSelected = formData['What is your current skill level in this domain?'] === lvl.id;
-                        return (
-                          <div
-                            key={lvl.id}
-                            onClick={() => handleChange('What is your current skill level in this domain?', lvl.id)}
-                            className={clsx(
-                              "p-3.5 rounded-xl border text-left cursor-pointer transition-all",
-                              isSelected
-                                ? "bg-blue-50 border-blue-600 ring-1 ring-blue-600/30 text-blue-900"
-                                : "bg-white border-slate-200 hover:bg-slate-50 text-slate-800"
-                            )}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs sm:text-sm">{lvl.title}</span>
-                              {isSelected && <Check className="w-4 h-4 text-blue-600" />}
-                            </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5">{lvl.desc}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Prior Experience Textarea */}
+                {/* Prior Experience or Interests */}
                 <div className="pt-2">
                   <TextAreaWithCharCount 
                     name="Detailed prior experience related to this position/team:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Describe any past experience, class projects, clubs, tools you know, or your genuine enthusiasm to take on responsibilities..."
-                    required 
+                    placeholder="Tell us about any relevant coursework, tools, projects, club activities, or your enthusiasm to learn and contribute..."
+                    minChars={0}
                   />
                 </div>
-
-                {/* SEPARATED FIELDS (Not combusted into one!): Certifications, Awards, and Projects */}
-                <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4 pt-4">
-                  <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span>Certifications & Achievements (Separate Fields)</span>
-                  </div>
-
-                  {/* 1. Certifications & Courses */}
-                  <TextInput 
-                    name="Certifications & specialized training (if any):" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="e.g. Coursera Machine Learning, Kaggle Python, Google Data Analytics, etc."
-                  />
-
-                  {/* 2. Awards & Honors */}
-                  <TextInput 
-                    name="Awards, honors & competition wins (if any):" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="e.g. Hackathon finalist, college science fair 1st prize, Dean's honor roll"
-                  />
-
-                  {/* 3. Notable Projects */}
-                  <TextInput 
-                    name="Notable projects & extracurricular achievements:" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="e.g. Built an EDA dashboard, edited video reels for a club, managed sports gala"
-                  />
-                </div>
-
               </Section>
 
               {/* Navigation Actions */}
@@ -934,19 +826,11 @@ export default function ApplicationForm() {
                   name="Why do you want to join the PAF-IAST Data Science Community?" 
                   value={formData} 
                   onChange={handleChange} 
-                  placeholder="Explain why you want to be part of the community and what value you want to create..."
+                  placeholder="Explain what excites you about joining the Data Science Community and what you hope to achieve..."
                   required 
                 />
 
-                <TextAreaWithCharCount 
-                  name="What is your biggest personal motivation to contribute?" 
-                  value={formData} 
-                  onChange={handleChange} 
-                  placeholder="What inspires you to dedicate your time and effort to this student community..."
-                  required 
-                />
-
-                {/* THE 3 FIELDS GIVEN THEIR OWN DEDICATED SPACIOUS CARDS (NOT SQUEEZED 3-INTO-1) */}
+                {/* Commitment & Availability Check */}
                 <div className="space-y-4 pt-2">
                   <div className="font-bold text-slate-800 text-sm">
                     Commitment & Availability Check
@@ -966,21 +850,7 @@ export default function ApplicationForm() {
                     />
                   </div>
 
-                  {/* 2. Trips & Events Outside University */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="font-semibold text-slate-900 text-sm">Trips & Events Outside University</div>
-                      <p className="text-xs text-slate-500">Can you travel for meetings, trips, or events outside the university?</p>
-                    </div>
-                    <RadioGroupInline 
-                      name="Would you be able to travel for conferences/events?" 
-                      options={["Yes", "No"]} 
-                      value={formData} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-
-                  {/* 3. Deadlines & Meetings */}
+                  {/* 2. Deadlines & Meetings */}
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="font-semibold text-slate-900 text-sm">Meetings & Deadlines</div>
@@ -1026,13 +896,6 @@ export default function ApplicationForm() {
                     )}
                   </AnimatePresence>
                 </div>
-
-                <TextInput 
-                  name="Is there anything else you'd like us to know about you?" 
-                  value={formData} 
-                  onChange={handleChange} 
-                  placeholder="Any personal projects, hobbies, creative talents, or sports..."
-                />
               </Section>
 
               {/* Navigation Actions */}
@@ -1073,18 +936,17 @@ export default function ApplicationForm() {
                 subtitle="Share your online profiles and project links"
               >
                 <div className="space-y-4">
-                  {/* LinkedIn Profile (All candidates get LinkedIn!) */}
+                  {/* LinkedIn Profile */}
                   <div>
                     <label className="block text-[13px] font-semibold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <LinkedinIcon className="w-4 h-4 text-blue-600" />
-                      <span>LinkedIn Profile URL <span className="text-red-500">*</span></span>
+                      <span>LinkedIn Profile URL <span className="text-slate-400 font-normal text-xs">(Optional for team members)</span></span>
                     </label>
                     <input
                       type="url"
                       value={formData['LinkedIn Profile URL:'] || ''}
                       onChange={(e) => handleChange('LinkedIn Profile URL:', e.target.value)}
-                      placeholder="https://linkedin.com/in/yourname"
-                      required
+                      placeholder="https://linkedin.com/in/yourname (Optional)"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-sm font-medium placeholder:text-slate-400 shadow-xs"
                     />
                   </div>
@@ -1136,39 +998,6 @@ export default function ApplicationForm() {
                     value={formData} 
                     onChange={handleChange} 
                     placeholder="Tell us where you have previously demonstrated leadership, coordination, or initiative..."
-                    required 
-                  />
-                </Section>
-              )}
-
-              {/* 2. General Secretary Questions (3 questions) */}
-              {selectedPosition === 'General Secretary' && (
-                <Section title="Executive Governance: General Secretary" icon={Crown}>
-                  <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-800 font-semibold mb-2">
-                    Administrative Core • Please answer these operational governance questions:
-                  </div>
-
-                  <TextAreaWithCharCount 
-                    name="Why are you applying for General Secretary, and what makes you suited for administrative governance?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Tell us about your organizational discipline, promptness, and administrative skills..."
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="How will you maintain official documentation, meeting minutes, and clear cross-team communication?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Share your approach to record-keeping, tracking meeting decisions, and communicating with directors..."
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="Share your experience with scheduling, event coordination, or official correspondence:" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Mention any past roles drafting notices, managing student groups, or interacting with university faculty/offices..."
                     required 
                   />
                 </Section>
@@ -1247,42 +1076,7 @@ export default function ApplicationForm() {
                 </Section>
               )}
 
-              {/* 5. Director Community & Public Relations (1 checklist + 2 questions) */}
-              {selectedPosition === 'Director Community & Public Relations' && (
-                <Section title="Directorate Lead: Community & Public Relations" icon={Share2}>
-                  <CheckboxGroup 
-                    name="Which PR & outreach areas interest you most?" 
-                    options={[
-                      "Corporate Sponsorships & Industry Partners", 
-                      "Guest Speaker & Tech Professional Outreach", 
-                      "Inter-University Relations & Delegations", 
-                      "Student Community Engagement", 
-                      "Stage Hosting & Public Announcements"
-                    ]} 
-                    value={formData} 
-                    onChange={handleCheckboxChange} 
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="What is your experience with public speaking, outreach, or contacting sponsors/guests?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Describe how you communicate with external parties, pitch ideas, or represent a team..."
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="How would you pitch the PAF-IAST Data Science Community to an industry sponsor or guest speaker?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Write a brief elevator pitch explaining why they should partner with our community..."
-                    required 
-                  />
-                </Section>
-              )}
-
-              {/* 6. Director Learning & Projects (1 checklist + 2 questions) */}
+              {/* 5. Director Learning & Projects (1 checklist + 2 questions) */}
               {selectedPosition === 'Director Learning & Projects' && (
                 <Section title="Directorate Lead: Learning & Projects" icon={Briefcase}>
                   <CheckboxGroup 

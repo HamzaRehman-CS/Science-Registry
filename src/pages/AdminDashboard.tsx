@@ -267,13 +267,13 @@ export default function AdminDashboard() {
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-purple-100 shadow-xs">
             <div className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Executive Roles</div>
             <div className="text-2xl sm:text-3xl font-extrabold text-purple-900 mt-1">{execCount}</div>
-            <div className="text-[11px] text-purple-600 mt-1">VP Female & Gen Sec</div>
+            <div className="text-[11px] text-purple-600 mt-1">Vice President (Female)</div>
           </div>
 
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-blue-100 shadow-xs">
             <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Directorates</div>
             <div className="text-2xl sm:text-3xl font-extrabold text-blue-900 mt-1">{directorCount}</div>
-            <div className="text-[11px] text-blue-600 mt-1">5 Core Directorates</div>
+            <div className="text-[11px] text-blue-600 mt-1">4 Lead Directorates</div>
           </div>
 
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-100 shadow-xs">
