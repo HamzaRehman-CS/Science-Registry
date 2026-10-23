@@ -129,7 +129,7 @@ export function exportApplicationsToFormattedExcel(applications: ApplicationData
       <tr>
         <td colspan="21" class="stat-banner">
           Total Candidates: <b>${applications.length}</b> &nbsp;|&nbsp; 
-          Society: <b>PAF-IAST Data Science Community</b> &nbsp;|&nbsp; 
+          Community: <b>The Data Science Community • PAF-IAST</b> &nbsp;|&nbsp; 
           Confidential Evaluation Copy
         </td>
       </tr>

@@ -454,8 +454,8 @@ export default function ApplicationForm() {
                 <span className="text-sm sm:text-base font-extrabold text-white tracking-tight block leading-snug">
                   The Data Science Community
                 </span>
-                <span className="text-xs text-slate-300 font-medium tracking-wide block mt-0.5">
-                  PAF-IAST Student Society
+                <span className="text-xs text-blue-300 font-medium tracking-wide block mt-0.5">
+                  PAF-IAST Student Community
                 </span>
               </div>
             </div>
@@ -1343,7 +1343,7 @@ export default function ApplicationForm() {
                   />
 
                   <TextAreaWithCharCount 
-                    name="What digital platform or tool would you create to make society operations faster?" 
+                    name="What digital platform or tool would you create to make community operations faster?" 
                     value={formData} 
                     onChange={handleChange} 
                     placeholder="Share an idea (e.g. member portal, event check-in scanner, automated certificate generator)..."
@@ -1352,9 +1352,7 @@ export default function ApplicationForm() {
                 </Section>
               )}
 
-
-
-              {/* 9. All Team Members (2 questions) */}
+              {/* 8. All Team Members (2 questions) */}
               {selectedPosition && selectedPosition.includes('Team Member') && (
                 <Section title={`Team Member Specialization: ${selectedPosition}`} icon={Users}>
                   <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-semibold mb-2">
@@ -1373,7 +1371,7 @@ export default function ApplicationForm() {
                     name="Have you worked in a team or club before? Briefly describe what you learned:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Tell us about any past group work, school team, or volunteer activity (or your eagerness if this is your first society!)..."
+                    placeholder="Tell us about any past group work, school team, or volunteer activity (or your eagerness if this is your first community experience!)..."
                     required 
                   />
                 </Section>
