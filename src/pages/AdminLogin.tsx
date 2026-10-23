@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { Lock, User, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { verifyAdminCredentials, saveAdminSession } from '../lib/applications';
 
-export default function AdminLogin() {
+interface AdminLoginProps {
+  onSuccess?: () => void;
+}
+
+export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,96 +19,123 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
 
-    const trimmedId = adminId.trim();
-    // Accept either the Admin ID 'PAFSS26' or full email
-    const email = trimmedId.includes('@') 
-      ? trimmedId 
-      : `${trimmedId.toLowerCase()}@society.com`;
+    // Artificial tiny pause for smooth UX
+    await new Promise(r => setTimeout(r, 400));
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const isValid = verifyAdminCredentials(adminId, password);
 
-    if (error) {
-      setError(error.message === 'Invalid login credentials' 
-        ? 'Invalid Admin ID or Password. (Reminder: Admin ID: PAFSS26, Password: register)' 
-        : error.message);
+    if (isValid) {
+      saveAdminSession(adminId);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        window.location.reload();
+      }
+    } else {
+      setError('Invalid Admin ID or Password. Access denied.');
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-comic-dots p-4 selection:bg-[#0056A8] selection:text-white">
-      <div className="max-w-md w-full mx-auto pt-4">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-slate-900 via-[#0A1128] to-slate-950 p-4 selection:bg-blue-600 selection:text-white text-slate-100">
+      
+      {/* Top Bar with Back Link */}
+      <div className="max-w-md w-full mx-auto pt-4 sm:pt-6">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-1.5 text-xs font-black text-slate-800 hover:text-[#0056A8] transition-colors mb-4 bg-white px-3.5 py-1.5 rounded-full border-2 border-slate-900 comic-shadow-sm"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-md"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Fun Portal</span>
+          <span>Back to Registration Portal</span>
         </Link>
       </div>
 
-      <div className="flex items-center justify-center my-auto">
+      {/* Main Login Card */}
+      <div className="flex items-center justify-center my-auto py-8">
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white rounded-3xl border-3 border-slate-900 comic-shadow-lg p-7 sm:p-9 relative"
+          className="max-w-md w-full bg-slate-900/90 rounded-3xl border border-slate-700/60 backdrop-blur-xl shadow-2xl p-7 sm:p-9 relative overflow-hidden"
         >
-          <div className="text-center mb-7">
-            <div className="flex items-center justify-between gap-3 mb-6 px-2">
-              <img src="/paf_iast_logo.png" alt="PAF-IAST" className="h-11 sm:h-12 w-auto object-contain" />
-              <div className="h-7 w-px bg-slate-300"></div>
-              <img src="/science_society_logo.png" alt="Science Society" className="h-11 sm:h-12 w-auto object-contain" />
+          {/* Ambient Glow */}
+          <div className="absolute -top-20 -right-20 w-44 h-44 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="text-center mb-7 relative z-10">
+            {/* Dual Logos Header - Identical Sizes */}
+            <div className="flex items-center justify-between gap-4 mb-6 px-2 pb-5 border-b border-slate-800">
+              <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center w-14 h-14 shrink-0">
+                <img 
+                  src="/dsc_logo.png" 
+                  alt="The Data Science Community" 
+                  className="w-full h-full object-contain" 
+                />
+              </div>
+              <div className="h-8 w-px bg-slate-800"></div>
+              <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center w-14 h-14 shrink-0">
+                <img 
+                  src="/paf_iast_logo.png" 
+                  alt="PAF-IAST" 
+                  className="w-full h-full object-contain" 
+                />
+              </div>
             </div>
             
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300 text-slate-950 text-xs font-black border-2 border-slate-900 comic-shadow-sm mb-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-3">
               <Shield className="w-3.5 h-3.5" />
-              <span>Admin Vault Sign-In</span>
+              <span>Administrative Portal</span>
             </div>
             
-            <h2 className="text-2xl font-black text-slate-900">Confidential Admin</h2>
-            <p className="text-slate-600 text-xs sm:text-sm mt-1 font-medium">Access submitted anonymous comments & hot takes</p>
+            <h2 className="text-2xl font-extrabold text-white tracking-tight">Admin Sign-In</h2>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1.5">
+              Enter your authorized administrative credentials to manage registrations
+            </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-100 text-red-900 border-2 border-red-500 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
-              <p className="text-xs sm:text-sm font-bold leading-relaxed">{error}</p>
+            <div className="mb-5 p-3.5 rounded-2xl bg-red-500/10 text-red-300 border border-red-500/20 flex items-start gap-2.5 text-xs sm:text-sm font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+              <p>{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">Admin ID</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                Admin ID
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-5 h-5" />
+                  <User className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
                   value={adminId}
                   onChange={(e) => setAdminId(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-3 py-3 rounded-xl comic-input bg-slate-50 text-slate-900 text-sm font-bold placeholder:text-slate-400"
-                  placeholder="PAFSS26"
+                  autoComplete="username"
+                  className="block w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-white text-sm font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-inner"
+                  placeholder="Enter Admin ID"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">Password</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                Password
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-5 h-5" />
+                  <Lock className="w-4 h-4" />
                 </div>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-3 py-3 rounded-xl comic-input bg-slate-50 text-slate-900 text-sm font-bold placeholder:text-slate-400"
+                  autoComplete="current-password"
+                  className="block w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-white text-sm font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-inner"
                   placeholder="••••••••"
                 />
               </div>
@@ -113,22 +144,25 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3.5 px-4 rounded-xl text-sm font-black text-white bg-[#0056A8] hover:bg-[#004282] comic-btn disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full mt-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-600/25 cursor-pointer flex items-center justify-center gap-2"
             >
-              {loading ? 'Verifying Admin...' : 'Unlock Admin Vault 🔑'}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Authenticating...</span>
+                </div>
+              ) : (
+                <span>Sign In to Admin Portal</span>
+              )}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-200 text-center">
-            <p className="text-xs text-slate-500 font-semibold">
-              Admin credentials: <span className="font-black text-slate-800">PAFSS26</span> / <span className="font-black text-slate-800">register</span>
-            </p>
-          </div>
         </motion.div>
       </div>
 
-      <div className="text-center py-4 text-xs text-slate-500 font-bold">
-        PAF-IAST Science Society • Admin Access
+      {/* Footer */}
+      <div className="text-center py-4 text-xs text-slate-500 font-medium">
+        PAF-IAST Data Science Community • Confidential Administrative System
       </div>
     </div>
   );

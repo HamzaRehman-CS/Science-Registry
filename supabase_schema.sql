@@ -1,54 +1,110 @@
 -- ====================================================================
--- PAF-IAST SCIENCE SOCIETY: ANONYMOUS ROAST & TOAST VAULT
+-- PAF-IAST DATA SCIENCE COMMUNITY: RECRUITMENT REGISTRY 2026–27
+-- Database Schema & Security Configuration
 -- ====================================================================
 
--- 1. Default Setup: The application seamlessly works with the existing 
--- 'applications' table without needing any manual migrations:
--- 
--- applicant_name: Target person's name
--- applied_position: Target person's role/post (e.g., President, Lead, Chai In-charge)
--- registration_number: ANON-xxx
--- department: 'Science Society Fun Activity'
--- semester: 'Fun 2026'
--- answers: JSON containing { "type": "society_comment", "target_name", "target_role", "comment", "vibe", "created_at" }
-
--- ====================================================================
--- 2. (OPTIONAL) Dedicated Table for Society Comments
--- If you wish to maintain a separate table in the future:
--- ====================================================================
-
-CREATE TABLE IF NOT EXISTS society_comments (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+-- 1. Create Applications Table with Complete Structured Fields
+CREATE TABLE IF NOT EXISTS applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    target_name TEXT NOT NULL,
-    target_role TEXT DEFAULT 'Society Member',
-    comment TEXT NOT NULL,
-    vibe TEXT DEFAULT 'general'
+    
+    -- Personal & Identification Details
+    applicant_name TEXT NOT NULL,
+    registration_number TEXT NOT NULL,
+    personal_email TEXT,
+    phone_number TEXT,
+    gender TEXT,
+    date_of_birth DATE,
+    province TEXT,
+    city TEXT,
+    
+    -- Academic Details
+    department TEXT NOT NULL,
+    degree_program TEXT,
+    semester TEXT NOT NULL,
+    
+    -- Position Selection
+    applied_category TEXT DEFAULT 'Department Team Member', -- 'Executive Leadership', 'Directorate Lead', 'Department Team Member'
+    applied_position TEXT NOT NULL,
+    second_choice_position TEXT,
+    skill_level TEXT DEFAULT 'Beginner',
+    
+    -- Data Science Scope & Passion Questions
+    ds_interest_reason TEXT,
+    ds_community_vision TEXT,
+    
+    -- Motivation & Availability
+    motivation_join TEXT,
+    motivation_drive TEXT,
+    can_participate_competitions TEXT DEFAULT 'Yes',
+    can_travel TEXT DEFAULT 'Yes',
+    willing_commit_deadlines TEXT DEFAULT 'Yes',
+    is_member_other_society TEXT DEFAULT 'No',
+    other_society_details TEXT,
+    
+    -- Experience & Credentials
+    detailed_prior_experience TEXT,
+    awards_certificates TEXT,
+    portfolio_link TEXT,
+    additional_info TEXT,
+    
+    -- Recruitment Evaluation & Admin Notes
+    status TEXT DEFAULT 'Pending', -- 'Pending', 'Shortlisted', 'Interview Scheduled', 'Accepted', 'Rejected'
+    admin_notes TEXT,
+    
+    -- Complete raw JSON answers payload for backwards compatibility
+    answers JSONB DEFAULT '{}'::jsonb
 );
 
--- Enable RLS
-ALTER TABLE society_comments ENABLE ROW LEVEL SECURITY;
+-- Unique constraint on Registration Number to prevent duplicates
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_reg_no_unique 
+    ON applications (LOWER(TRIM(registration_number)));
 
--- Allow public anonymous insert
-CREATE POLICY "Allow public comment insert" ON society_comments
+-- Helpful performance indexes
+CREATE INDEX IF NOT EXISTS idx_applications_position ON applications (applied_position);
+CREATE INDEX IF NOT EXISTS idx_applications_category ON applications (applied_category);
+CREATE INDEX IF NOT EXISTS idx_applications_status ON applications (status);
+CREATE INDEX IF NOT EXISTS idx_applications_created ON applications (created_at DESC);
+
+-- ====================================================================
+-- 2. Row Level Security (RLS) Setup
+-- ====================================================================
+
+ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+
+-- Allow public applicants to submit registration forms
+DROP POLICY IF EXISTS "Allow public to submit application" ON applications;
+CREATE POLICY "Allow public to submit application" ON applications
     FOR INSERT 
     TO public
     WITH CHECK (true);
 
--- Allow authenticated admin to read comments
-CREATE POLICY "Allow authenticated read comments" ON society_comments
+-- Allow authenticated admin users to read all applications
+DROP POLICY IF EXISTS "Allow authenticated admin to read applications" ON applications;
+CREATE POLICY "Allow authenticated admin to read applications" ON applications
     FOR SELECT 
     TO authenticated
     USING (true);
 
--- Allow authenticated admin to delete comments
-CREATE POLICY "Allow authenticated delete comments" ON society_comments
+-- Allow authenticated admin users to update candidate status & notes
+DROP POLICY IF EXISTS "Allow authenticated admin to update applications" ON applications;
+CREATE POLICY "Allow authenticated admin to update applications" ON applications
+    FOR UPDATE 
+    TO authenticated
+    USING (true);
+
+-- Allow authenticated admin users to delete applications
+DROP POLICY IF EXISTS "Allow authenticated admin to delete applications" ON applications;
+CREATE POLICY "Allow authenticated admin to delete applications" ON applications
     FOR DELETE 
     TO authenticated
     USING (true);
 
 -- ====================================================================
--- Admin Credentials in Supabase Auth:
--- Email / Admin ID: PAFSS26 (resolves to pafss26@society.com)
--- Password: register
+-- 3. Admin Credentials Configuration
+-- ====================================================================
+-- Admin ID: dec26
+-- Password: registry
+-- (In Supabase Auth, you can register user: dec26@society.com with password: registry)
+-- The portal automatically authenticates both client-side and via Supabase Auth.
 -- ====================================================================

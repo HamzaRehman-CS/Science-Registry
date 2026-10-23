@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" fill="none">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="50%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#2563EB" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- Left Side: Modern Data Science Infinity Loop Symbol -->
+  <g transform="translate(10, 8)" filter="url(#softGlow)">
+    <!-- Infinity Path -->
+    <path 
+      d="M 52,52 
+         C 32,32 12,38 12,52 
+         C 12,66 32,72 52,52 
+         C 72,32 92,38 92,52 
+         C 92,66 72,72 52,52 Z" 
+      stroke="url(#blueGrad)" 
+      stroke-width="12" 
+      stroke-linecap="round" 
+      stroke-linejoin="round" 
+      fill="none" 
+    />
+    <!-- Data nodes -->
+    <circle cx="12" cy="52" r="5" fill="#38BDF8" />
+    <circle cx="92" cy="52" r="5" fill="#38BDF8" />
+    <circle cx="52" cy="52" r="4.5" fill="#1D4ED8" />
+  </g>
+
+  <!-- Right Side: Bold, Crystal-Clear Typography -->
+  <g transform="translate(130, 20)">
+    <text x="0" y="42" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" fill="#0A1128" letter-spacing="1.5">DATA SCIENCE</text>
+    <text x="2" y="74" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="19" fill="#2563EB" letter-spacing="7">COMMUNITY</text>
+  </g>
+</svg>
