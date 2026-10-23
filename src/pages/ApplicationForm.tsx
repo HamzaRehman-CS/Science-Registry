@@ -108,46 +108,6 @@ const COMMUNITY_TEAM_POSITIONS = [
   }
 ];
 
-const CHAPTER_LEADERSHIP_POSITIONS = [
-  {
-    id: "Chapter Ambassador / Lead",
-    title: "Chapter Ambassador / Chapter Lead",
-    desc: "Leading first-chapter student representation, chapter culture, and community growth."
-  },
-  {
-    id: "Deputy Chapter Lead",
-    title: "Deputy Chapter Lead",
-    desc: "Assisting chapter operations, coordination with cabinet directors, and team execution."
-  },
-  {
-    id: "Chapter Event Lead",
-    title: "Chapter Event Lead",
-    desc: "Organizing localized chapter sessions, meetups, coding days, and workshop logistics."
-  },
-  {
-    id: "Chapter Media & Design Lead",
-    title: "Chapter Media & Design Lead",
-    desc: "Managing chapter branding, event photo/video coverage, announcements, and posters."
-  }
-];
-
-const CHAPTER_TEAM_POSITIONS = [
-  {
-    id: "Chapter Event Team Member",
-    title: "Chapter Event Team Member",
-    desc: "Support planning, venue logistics, and smooth running of chapter events."
-  },
-  {
-    id: "Chapter Media & Design Team Member",
-    title: "Chapter Media & Design Team Member",
-    desc: "Design chapter posters, capture event photos, and handle digital announcements."
-  },
-  {
-    id: "Chapter Operations & Outreach Team Member",
-    title: "Chapter Operations & Outreach Team Member",
-    desc: "Help connect students, organize study groups, and build chapter community spirit."
-  }
-];
 
 const FORM_STEPS = [
   { num: 1, title: "Personal Details", subtitle: "Identity & Academic Profile" },
@@ -218,8 +178,6 @@ export default function ApplicationForm() {
   const getPositionCategory = (pos: string) => {
     if (pos === 'Vice President Female' || pos === 'General Secretary') return 'Executive Leadership';
     if (pos && pos.startsWith('Director')) return 'Directorate Lead';
-    if (pos && pos.startsWith('Chapter') && (pos.includes('Lead') || pos.includes('Ambassador'))) return 'Chapter Leadership';
-    if (pos && pos.startsWith('Chapter') && pos.includes('Team Member')) return 'Chapter Team Member';
     return 'Department Team Member';
   };
 
@@ -497,7 +455,7 @@ export default function ApplicationForm() {
                   The Data Science Community
                 </span>
                 <span className="text-xs text-slate-300 font-medium tracking-wide block mt-0.5">
-                  PAF-IAST Student Chapter
+                  PAF-IAST Student Society
                 </span>
               </div>
             </div>
@@ -807,45 +765,12 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 3. First Chapter Leadership */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-                      First Chapter Leadership
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {CHAPTER_LEADERSHIP_POSITIONS.map(pos => {
-                      const isSelected = selectedPosition === pos.id;
-                      return (
-                        <div
-                          key={pos.id}
-                          onClick={() => handleChange('Which position are you registering for?', pos.id)}
-                          className={clsx(
-                            "p-4 rounded-2xl border transition-all text-left relative cursor-pointer",
-                            isSelected
-                              ? "bg-amber-50/90 border-amber-500 ring-2 ring-amber-500/20 shadow-xs"
-                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-slate-900 text-sm">{pos.title}</span>
-                            {isSelected && <Check className="w-4 h-4 text-amber-600 shrink-0" />}
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{pos.desc}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 4. Community Directorate Team Members */}
+                {/* 3. Directorate Team Members */}
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Community Directorate Team Members
+                      Directorate Team Members
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -873,46 +798,13 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 5. First Chapter Team Members */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-indigo-600" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
-                      First Chapter Team Members
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {CHAPTER_TEAM_POSITIONS.map(pos => {
-                      const isSelected = selectedPosition === pos.id;
-                      return (
-                        <div
-                          key={pos.id}
-                          onClick={() => handleChange('Which position are you registering for?', pos.id)}
-                          className={clsx(
-                            "p-4 rounded-2xl border transition-all text-left relative cursor-pointer",
-                            isSelected
-                              ? "bg-indigo-50/90 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs"
-                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-slate-900 text-sm">{pos.title}</span>
-                            {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{pos.desc}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 {/* Second-choice position */}
                 <div className="pt-3">
                   <TextInput 
                     name="What is your second-choice position?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="e.g. Marketing & Communications Team Member or Director PR or Chapter Event Lead"
+                    placeholder="e.g. Marketing & Communications Team Member or Director of Event Management or Learning & Projects"
                     required 
                   />
                 </div>
@@ -1460,38 +1352,7 @@ export default function ApplicationForm() {
                 </Section>
               )}
 
-              {/* 8. First Chapter Leadership (3 questions) */}
-              {selectedPosition && selectedPosition.startsWith('Chapter') && !selectedPosition.includes('Team Member') && (
-                <Section title={`First Chapter Leadership: ${selectedPosition}`} icon={Sparkles}>
-                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-semibold mb-2">
-                    Inaugural Chapter Leadership • Help pioneer the first official chapter of the Data Science Community:
-                  </div>
 
-                  <TextAreaWithCharCount 
-                    name="Why do you want to lead in the First Chapter of the Data Science Community?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Tell us what motivates you to help launch and lead this chapter from day one..."
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="How will you build student excitement and engagement within your chapter?" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Share initiatives, study groups, or activities you would organize to connect students..."
-                    required 
-                  />
-
-                  <TextAreaWithCharCount 
-                    name="Share any past event coordination, group leadership, or extracurricular experience:" 
-                    value={formData} 
-                    onChange={handleChange} 
-                    placeholder="Tell us about teams you've coordinated or projects you've managed..."
-                    required 
-                  />
-                </Section>
-              )}
 
               {/* 9. All Team Members (2 questions) */}
               {selectedPosition && selectedPosition.includes('Team Member') && (

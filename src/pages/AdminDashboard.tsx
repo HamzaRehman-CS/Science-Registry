@@ -23,8 +23,7 @@ import {
   Phone, 
   Mail, 
   Globe,
-  Printer,
-  Sparkles
+  Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -124,8 +123,6 @@ export default function AdminDashboard() {
         app.applied_position === 'General Secretary';
     } else if (selectedCategoryTab === 'DIRECTORS') {
       matchesCategory = (app.applied_position || '').startsWith('Director');
-    } else if (selectedCategoryTab === 'CHAPTER') {
-      matchesCategory = (app.applied_position || '').includes('Chapter');
     } else if (selectedCategoryTab === 'EVENT') {
       matchesCategory = (app.applied_position || '').includes('Event');
     } else if (selectedCategoryTab === 'MARKETING') {
@@ -145,7 +142,7 @@ export default function AdminDashboard() {
     return matchesSearch && matchesCategory && matchesSemester;
   });
 
-  // Analytics Metrics (No pending/shortlisted cards)
+  // Analytics Metrics
   const totalCount = applications.length;
   const execCount = applications.filter(a => 
     a.applied_category === 'Executive Leadership' || 
@@ -156,13 +153,11 @@ export default function AdminDashboard() {
     a.applied_category === 'Directorate Lead' || 
     (a.applied_position || '').startsWith('Director')
   ).length;
-  const chapterCount = applications.filter(a => 
-    (a.applied_position || '').includes('Chapter')
-  ).length;
   const teamCount = applications.filter(a => 
     a.applied_category === 'Department Team Member' || 
     (a.applied_position || '').includes('Team Member')
   ).length;
+  const deptCount = new Set(applications.map(a => (a.department || '').trim()).filter(Boolean)).size;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -281,16 +276,16 @@ export default function AdminDashboard() {
             <div className="text-[11px] text-blue-600 mt-1">5 Core Directorates</div>
           </div>
 
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-amber-100 shadow-xs">
-            <div className="text-xs font-semibold text-amber-700 uppercase tracking-wider">First Chapter</div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1">{chapterCount}</div>
-            <div className="text-[11px] text-amber-600 mt-1">Leads & Team Members</div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-100 shadow-xs col-span-2 sm:col-span-1">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-100 shadow-xs">
             <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Team Members</div>
             <div className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1">{teamCount}</div>
             <div className="text-[11px] text-emerald-600 mt-1">All Functional Wings</div>
+          </div>
+
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-indigo-100 shadow-xs col-span-2 sm:col-span-1">
+            <div className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Departments</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-indigo-900 mt-1">{deptCount}</div>
+            <div className="text-[11px] text-indigo-600 mt-1">Diverse University Fields</div>
           </div>
         </div>
 
@@ -303,7 +298,6 @@ export default function AdminDashboard() {
               { id: 'ALL', label: 'All Candidates' },
               { id: 'EXECUTIVE', label: 'Executive Cabinet' },
               { id: 'DIRECTORS', label: 'Directorates' },
-              { id: 'CHAPTER', label: 'First Chapter' },
               { id: 'EVENT', label: 'Event Management' },
               { id: 'MARKETING', label: 'Marketing & Comms' },
               { id: 'PR', label: 'Community & PR' },
@@ -418,7 +412,6 @@ export default function AdminDashboard() {
                   {filteredApps.map((app, idx) => {
                     const isExec = app.applied_category === 'Executive Leadership' || app.applied_position.includes('President') || app.applied_position.includes('Secretary');
                     const isDir = app.applied_category === 'Directorate Lead' || app.applied_position.startsWith('Director');
-                    const isChapter = (app.applied_position || '').includes('Chapter');
 
                     const linkedin = app.linkedin_url || (app.portfolio_link && app.portfolio_link.includes('linkedin') ? app.portfolio_link : null);
                     const portfolio = app.portfolio_url || (app.portfolio_link && !linkedin ? app.portfolio_link : null);
@@ -445,12 +438,9 @@ export default function AdminDashboard() {
                               ? "bg-purple-50 text-purple-700 border border-purple-200" 
                               : isDir 
                               ? "bg-blue-50 text-blue-700 border border-blue-200" 
-                              : isChapter
-                              ? "bg-amber-50 text-amber-800 border border-amber-200"
                               : "bg-slate-100 text-slate-700 border border-slate-200"
                           )}>
                             {isExec && <Crown className="w-3 h-3" />}
-                            {isChapter && <Sparkles className="w-3 h-3 text-amber-600" />}
                             {app.applied_position}
                           </span>
                         </td>
