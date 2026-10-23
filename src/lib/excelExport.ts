@@ -97,6 +97,13 @@ export function exportApplicationsToFormattedExcel(applications: ApplicationData
         padding: 3px 6px;
         border-radius: 4px;
       }
+      .badge-chapter {
+        background-color: #FEF3C7;
+        color: #92400E;
+        font-weight: bold;
+        padding: 3px 6px;
+        border-radius: 4px;
+      }
       .badge-team {
         background-color: #F1F5F9;
         color: #334155;
@@ -167,6 +174,8 @@ export function exportApplicationsToFormattedExcel(applications: ApplicationData
       catBadgeClass = 'badge-exec';
     } else if (app.applied_category === 'Directorate Lead' || app.applied_position.startsWith('Director')) {
       catBadgeClass = 'badge-dir';
+    } else if (app.applied_category?.includes('Chapter') || app.applied_position.includes('Chapter')) {
+      catBadgeClass = 'badge-chapter';
     }
 
     const linkedin = app.linkedin_url || (app.portfolio_link && app.portfolio_link.includes('linkedin') ? app.portfolio_link : '');

@@ -10,7 +10,6 @@ import {
   Check, 
   Crown, 
   Briefcase, 
-  Palette, 
   Video, 
   Users, 
   Share2, 
@@ -56,46 +55,97 @@ const EXECUTIVE_POSITIONS: ExecutivePosition[] = [
 const DIRECTOR_POSITIONS = [
   {
     id: "Director Event Management",
-    title: "Director Event Management",
-    desc: "Leading hackathons, workshops, coding bootcamps, and logistics across campus."
+    title: "Director of Event Management",
+    desc: "Leading hackathons, workshops, bootcamps, and logistical operations across campus."
   },
   {
-    id: "Director Media",
-    title: "Director Media",
-    desc: "Leading videography, graphic design, social media reels, and digital branding."
+    id: "Director Marketing & Communications",
+    title: "Director of Marketing & Communications",
+    desc: "Leading branding, social media, promotion campaigns, graphic design, and video content."
   },
   {
-    id: "Director Public Relations (PR)",
-    title: "Director Public Relations (PR)",
-    desc: "Leading corporate sponsorships, guest speaker outreach, and inter-university liaisons."
+    id: "Director Community & Public Relations",
+    title: "Director of Community & Public Relations",
+    desc: "Leading corporate sponsorships, industry speaker relations, and student outreach."
   },
   {
-    id: "Director Decor",
-    title: "Director Decor & Arts",
-    desc: "Designing immersive stage backdrops, event photo-booths, and aesthetic venue setups."
+    id: "Director Learning & Projects",
+    title: "Director of Learning & Projects",
+    desc: "Leading technical study circles, project mentorship, coding sprints, and hands-on bootcamps."
+  },
+  {
+    id: "Director Technology & Platform",
+    title: "Director of Technology & Platform",
+    desc: "Managing web portals, technical infrastructure, internal tools, and developer platforms."
   }
 ];
 
-const TEAM_MEMBER_POSITIONS = [
+const COMMUNITY_TEAM_POSITIONS = [
   {
-    id: "Event Management Team Member",
+    id: "Event Management - Team Member",
     title: "Event Management - Team Member",
-    desc: "Coordinate venue setups, participant registrations, stage operations, and event flow."
+    desc: "Coordinate hall setups, registrations, speaker reception, and event flow."
   },
   {
-    id: "Media & Content Team Member",
-    title: "Media & Content - Team Member",
-    desc: "Create graphic posters, edit event recap reels, shoot photography, and write tech copy."
+    id: "Marketing & Communications - Team Member",
+    title: "Marketing & Communications - Team Member",
+    desc: "Create graphic posters, reels, video recaps, tech copy, and digital campaigns."
   },
   {
-    id: "Public Relations (PR) Team Member",
-    title: "Public Relations (PR) - Team Member",
-    desc: "Communicate with student bodies, connect with sponsors, and manage campus outreach."
+    id: "Community & Public Relations - Team Member",
+    title: "Community & Public Relations - Team Member",
+    desc: "Engage student bodies, communicate with sponsors, and manage campus liaisons."
   },
   {
-    id: "Decor & Arts Team Member",
-    title: "Decor & Arts - Team Member",
-    desc: "Build handmade creative displays, hall aesthetics, stage installations, and props."
+    id: "Learning & Projects - Team Member",
+    title: "Learning & Projects - Team Member",
+    desc: "Help run coding bootcamps, curate datasets, facilitate study groups, and track project milestones."
+  },
+  {
+    id: "Technology & Platform - Team Member",
+    title: "Technology & Platform - Team Member",
+    desc: "Contribute to web applications, portals, automation bots, and platform support."
+  }
+];
+
+const CHAPTER_LEADERSHIP_POSITIONS = [
+  {
+    id: "Chapter Ambassador / Lead",
+    title: "Chapter Ambassador / Chapter Lead",
+    desc: "Leading first-chapter student representation, chapter culture, and community growth."
+  },
+  {
+    id: "Deputy Chapter Lead",
+    title: "Deputy Chapter Lead",
+    desc: "Assisting chapter operations, coordination with cabinet directors, and team execution."
+  },
+  {
+    id: "Chapter Event Lead",
+    title: "Chapter Event Lead",
+    desc: "Organizing localized chapter sessions, meetups, coding days, and workshop logistics."
+  },
+  {
+    id: "Chapter Media & Design Lead",
+    title: "Chapter Media & Design Lead",
+    desc: "Managing chapter branding, event photo/video coverage, announcements, and posters."
+  }
+];
+
+const CHAPTER_TEAM_POSITIONS = [
+  {
+    id: "Chapter Event Team Member",
+    title: "Chapter Event Team Member",
+    desc: "Support planning, venue logistics, and smooth running of chapter events."
+  },
+  {
+    id: "Chapter Media & Design Team Member",
+    title: "Chapter Media & Design Team Member",
+    desc: "Design chapter posters, capture event photos, and handle digital announcements."
+  },
+  {
+    id: "Chapter Operations & Outreach Team Member",
+    title: "Chapter Operations & Outreach Team Member",
+    desc: "Help connect students, organize study groups, and build chapter community spirit."
   }
 ];
 
@@ -168,6 +218,8 @@ export default function ApplicationForm() {
   const getPositionCategory = (pos: string) => {
     if (pos === 'Vice President Female' || pos === 'General Secretary') return 'Executive Leadership';
     if (pos && pos.startsWith('Director')) return 'Directorate Lead';
+    if (pos && pos.startsWith('Chapter') && (pos.includes('Lead') || pos.includes('Ambassador'))) return 'Chapter Leadership';
+    if (pos && pos.startsWith('Chapter') && pos.includes('Team Member')) return 'Chapter Team Member';
     return 'Department Team Member';
   };
 
@@ -755,16 +807,49 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* Department Team Members */}
+                {/* 3. First Chapter Leadership */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                      First Chapter Leadership
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {CHAPTER_LEADERSHIP_POSITIONS.map(pos => {
+                      const isSelected = selectedPosition === pos.id;
+                      return (
+                        <div
+                          key={pos.id}
+                          onClick={() => handleChange('Which position are you registering for?', pos.id)}
+                          className={clsx(
+                            "p-4 rounded-2xl border transition-all text-left relative cursor-pointer",
+                            isSelected
+                              ? "bg-amber-50/90 border-amber-500 ring-2 ring-amber-500/20 shadow-xs"
+                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-slate-900 text-sm">{pos.title}</span>
+                            {isSelected && <Check className="w-4 h-4 text-amber-600 shrink-0" />}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{pos.desc}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Community Directorate Team Members */}
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Department Team Members (All Batches)
+                      Community Directorate Team Members
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {TEAM_MEMBER_POSITIONS.map(pos => {
+                    {COMMUNITY_TEAM_POSITIONS.map(pos => {
                       const isSelected = selectedPosition === pos.id;
                       return (
                         <div
@@ -788,13 +873,46 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* NOT SQUEEZED: Second-choice position gets its own full spacious space */}
+                {/* 5. First Chapter Team Members */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-indigo-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+                      First Chapter Team Members
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {CHAPTER_TEAM_POSITIONS.map(pos => {
+                      const isSelected = selectedPosition === pos.id;
+                      return (
+                        <div
+                          key={pos.id}
+                          onClick={() => handleChange('Which position are you registering for?', pos.id)}
+                          className={clsx(
+                            "p-4 rounded-2xl border transition-all text-left relative cursor-pointer",
+                            isSelected
+                              ? "bg-indigo-50/90 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs"
+                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-slate-900 text-sm">{pos.title}</span>
+                            {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{pos.desc}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Second-choice position */}
                 <div className="pt-3">
                   <TextInput 
                     name="What is your second-choice position?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="e.g. Media Team Member or Director PR or Event Management"
+                    placeholder="e.g. Marketing & Communications Team Member or Director PR or Chapter Event Lead"
                     required 
                   />
                 </div>
@@ -1201,21 +1319,18 @@ export default function ApplicationForm() {
                 </Section>
               )}
 
-              {/* 4. Director Media (3 questions) */}
-              {selectedPosition === 'Director Media' && (
-                <Section title="Directorate Lead: Media & Content" icon={Video}>
+              {/* 4. Director Marketing & Communications (1 checklist + 2 questions) */}
+              {selectedPosition === 'Director Marketing & Communications' && (
+                <Section title="Directorate Lead: Marketing & Communications" icon={Video}>
                   <CheckboxGroup 
-                    name="What creative tools/software are you comfortable using?" 
+                    name="Which creative & marketing areas are you comfortable with?" 
                     options={[
-                      "Canva", 
-                      "Adobe Photoshop", 
-                      "Adobe Illustrator", 
-                      "Figma", 
-                      "CapCut", 
-                      "Premiere Pro / After Effects", 
-                      "DSLR / Mirrorless Photography", 
-                      "Reels & Short Video Production", 
-                      "Tech Copywriting"
+                      "Canva & Graphic Design", 
+                      "Social Media Strategy (Instagram / LinkedIn)", 
+                      "Video Editing & Reels (CapCut / Premiere)", 
+                      "Tech Copywriting & Event Content", 
+                      "Photography & Event Coverage",
+                      "Marketing Campaigns & Promotions"
                     ]} 
                     value={formData} 
                     onChange={handleCheckboxChange} 
@@ -1223,34 +1338,34 @@ export default function ApplicationForm() {
                   />
 
                   <TextAreaWithCharCount 
-                    name="Describe your design or video background and past content created:" 
+                    name="Describe your design, video, or content background and past work:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Share what kind of graphics, reels, or posts you enjoy creating..."
+                    placeholder="Tell us what kind of graphics, reels, or campaigns you enjoy creating (portfolio links can be pasted in the field above)..."
                     required 
                   />
 
                   <TextAreaWithCharCount 
-                    name="What is your vision for the Data Science Community's social media and reel branding?" 
+                    name="What is your strategy to build strong brand presence for the Data Science Community across campus?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="How will you make the community's Instagram, LinkedIn, and YouTube stand out among student societies..."
+                    placeholder="Share how you'll make our posts, reels, and announcements engaging and viral among students..."
                     required 
                   />
                 </Section>
               )}
 
-              {/* 5. Director Public Relations (PR) (3 questions) */}
-              {selectedPosition === 'Director Public Relations (PR)' && (
-                <Section title="Directorate Lead: Public Relations & Outreach" icon={Share2}>
+              {/* 5. Director Community & Public Relations (1 checklist + 2 questions) */}
+              {selectedPosition === 'Director Community & Public Relations' && (
+                <Section title="Directorate Lead: Community & Public Relations" icon={Share2}>
                   <CheckboxGroup 
-                    name="Which PR & communication areas interest you most?" 
+                    name="Which PR & outreach areas interest you most?" 
                     options={[
-                      "Corporate Sponsorships & Tech Partners", 
-                      "Guest Speaker & Industry Outreach", 
+                      "Corporate Sponsorships & Industry Partners", 
+                      "Guest Speaker & Tech Professional Outreach", 
                       "Inter-University Relations & Delegations", 
-                      "Public Speaking & Announcements", 
-                      "Campus Ambassadorship"
+                      "Student Community Engagement", 
+                      "Stage Hosting & Public Announcements"
                     ]} 
                     value={formData} 
                     onChange={handleCheckboxChange} 
@@ -1261,32 +1376,31 @@ export default function ApplicationForm() {
                     name="What is your experience with public speaking, outreach, or contacting sponsors/guests?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Describe how you communicate with external parties, pitch ideas, or speak publicly..."
+                    placeholder="Describe how you communicate with external parties, pitch ideas, or represent a team..."
                     required 
                   />
 
                   <TextAreaWithCharCount 
-                    name="How would you pitch the PAF-IAST Data Science Community to an industry partner for sponsorship?" 
+                    name="How would you pitch the PAF-IAST Data Science Community to an industry sponsor or guest speaker?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Write a brief elevator pitch explaining why a company should sponsor our event..."
+                    placeholder="Write a brief elevator pitch explaining why they should partner with our community..."
                     required 
                   />
                 </Section>
               )}
 
-              {/* 6. Director Decor & Arts (3 questions) */}
-              {selectedPosition === 'Director Decor' && (
-                <Section title="Directorate Lead: Decor & Arts" icon={Palette}>
+              {/* 6. Director Learning & Projects (1 checklist + 2 questions) */}
+              {selectedPosition === 'Director Learning & Projects' && (
+                <Section title="Directorate Lead: Learning & Projects" icon={Briefcase}>
                   <CheckboxGroup 
-                    name="What creative design & decor skills do you have?" 
+                    name="Which technical learning tracks would you like to lead?" 
                     options={[
-                      "Themed Event Hall Decor", 
-                      "Stage Backdrops & Photobooth Setup", 
-                      "Handmade Crafts & Origami", 
-                      "Banners & Creative Signboards", 
-                      "Light Styling & Stage Ambience", 
-                      "Stall & Exhibition Displays"
+                      "Python & Data Science Study Circles", 
+                      "Machine Learning & AI Workshops", 
+                      "Kaggle Competitions & Coding Sprints", 
+                      "Hands-on Student Project Mentorship", 
+                      "Beginner-Friendly Tech Bootcamps"
                     ]} 
                     value={formData} 
                     onChange={handleCheckboxChange} 
@@ -1294,31 +1408,103 @@ export default function ApplicationForm() {
                   />
 
                   <TextAreaWithCharCount 
-                    name="Describe any past craft, setup, or decorative projects you have worked on:" 
+                    name="What technical areas, languages, or tools are you familiar with (e.g., Python, Pandas, SQL, ML)?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Tell us about decorative or artistic projects you've undertaken..."
+                    placeholder="Share your technical experience and projects you've explored or built..."
                     required 
                   />
 
                   <TextAreaWithCharCount 
-                    name="What creative concept do you have for an upcoming Data Science conference or event?" 
+                    name="What is 1 project or workshop idea you would lead for community members?" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Describe stage aesthetic, photo-booth concepts, or ambient themes you envision..."
+                    placeholder="Describe a hands-on learning activity or project that would benefit students..."
                     required 
                   />
                 </Section>
               )}
 
-              {/* 7. Department Team Members (2 questions) */}
-              {selectedPosition && selectedPosition.includes('Team Member') && (
-                <Section title={`Team Member Specialization: ${selectedPosition}`} icon={Users}>
+              {/* 7. Director Technology & Platform (1 checklist + 2 questions) */}
+              {selectedPosition === 'Director Technology & Platform' && (
+                <Section title="Directorate Lead: Technology & Platform" icon={Globe}>
+                  <CheckboxGroup 
+                    name="Which technical stack / platform skills do you have?" 
+                    options={[
+                      "Frontend (React / Next.js / Tailwind / HTML/CSS)", 
+                      "Backend & APIs (Node.js / Python / Express)", 
+                      "Databases & Cloud (PostgreSQL / Supabase / Firebase)", 
+                      "Discord Bots & Community Automations", 
+                      "Git & GitHub Version Control"
+                    ]} 
+                    value={formData} 
+                    onChange={handleCheckboxChange} 
+                    required 
+                  />
+
                   <TextAreaWithCharCount 
-                    name="Which specific tasks are you most excited to contribute to in this team?" 
+                    name="Describe any web applications, platforms, or tools you have built or worked on:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Tell us what you are eager to learn or help with during events and workshops..."
+                    placeholder="Tell us about your coding projects, technical problem-solving, or system tools..."
+                    required 
+                  />
+
+                  <TextAreaWithCharCount 
+                    name="What digital platform or tool would you create to make society operations faster?" 
+                    value={formData} 
+                    onChange={handleChange} 
+                    placeholder="Share an idea (e.g. member portal, event check-in scanner, automated certificate generator)..."
+                    required 
+                  />
+                </Section>
+              )}
+
+              {/* 8. First Chapter Leadership (3 questions) */}
+              {selectedPosition && selectedPosition.startsWith('Chapter') && !selectedPosition.includes('Team Member') && (
+                <Section title={`First Chapter Leadership: ${selectedPosition}`} icon={Sparkles}>
+                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-semibold mb-2">
+                    Inaugural Chapter Leadership • Help pioneer the first official chapter of the Data Science Community:
+                  </div>
+
+                  <TextAreaWithCharCount 
+                    name="Why do you want to lead in the First Chapter of the Data Science Community?" 
+                    value={formData} 
+                    onChange={handleChange} 
+                    placeholder="Tell us what motivates you to help launch and lead this chapter from day one..."
+                    required 
+                  />
+
+                  <TextAreaWithCharCount 
+                    name="How will you build student excitement and engagement within your chapter?" 
+                    value={formData} 
+                    onChange={handleChange} 
+                    placeholder="Share initiatives, study groups, or activities you would organize to connect students..."
+                    required 
+                  />
+
+                  <TextAreaWithCharCount 
+                    name="Share any past event coordination, group leadership, or extracurricular experience:" 
+                    value={formData} 
+                    onChange={handleChange} 
+                    placeholder="Tell us about teams you've coordinated or projects you've managed..."
+                    required 
+                  />
+                </Section>
+              )}
+
+              {/* 9. All Team Members (2 questions) */}
+              {selectedPosition && selectedPosition.includes('Team Member') && (
+                <Section title={`Team Member Specialization: ${selectedPosition}`} icon={Users}>
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-semibold mb-2">
+                    Team Member Track • We warmly welcome all students eager to contribute, learn, and grow!
+                  </div>
+
+                  <TextAreaWithCharCount 
+                    name="Which specific tasks or skills are you most excited to contribute and learn in this team?" 
+                    value={formData} 
+                    onChange={handleChange} 
+                    placeholder="Tell us what you are eager to work on, learn, and assist with..."
                     required 
                   />
 
@@ -1326,7 +1512,7 @@ export default function ApplicationForm() {
                     name="Have you worked in a team or club before? Briefly describe what you learned:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Tell us about any past group work, school team, or volunteer activity..."
+                    placeholder="Tell us about any past group work, school team, or volunteer activity (or your eagerness if this is your first society!)..."
                     required 
                   />
                 </Section>

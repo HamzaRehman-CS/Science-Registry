@@ -23,7 +23,8 @@ import {
   Phone, 
   Mail, 
   Globe,
-  Printer
+  Printer,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -121,16 +122,20 @@ export default function AdminDashboard() {
       matchesCategory = app.applied_category === 'Executive Leadership' || 
         app.applied_position === 'Vice President Female' || 
         app.applied_position === 'General Secretary';
-    } else if (selectedCategoryTab === 'MEDIA') {
-      matchesCategory = (app.applied_position || '').includes('Media');
-    } else if (selectedCategoryTab === 'PR') {
-      matchesCategory = (app.applied_position || '').includes('Public Relations') || (app.applied_position || '').includes('PR');
-    } else if (selectedCategoryTab === 'EVENT') {
-      matchesCategory = (app.applied_position || '').includes('Event');
-    } else if (selectedCategoryTab === 'DECOR') {
-      matchesCategory = (app.applied_position || '').includes('Decor');
     } else if (selectedCategoryTab === 'DIRECTORS') {
       matchesCategory = (app.applied_position || '').startsWith('Director');
+    } else if (selectedCategoryTab === 'CHAPTER') {
+      matchesCategory = (app.applied_position || '').includes('Chapter');
+    } else if (selectedCategoryTab === 'EVENT') {
+      matchesCategory = (app.applied_position || '').includes('Event');
+    } else if (selectedCategoryTab === 'MARKETING') {
+      matchesCategory = (app.applied_position || '').includes('Marketing') || (app.applied_position || '').includes('Media');
+    } else if (selectedCategoryTab === 'PR') {
+      matchesCategory = (app.applied_position || '').includes('Public Relations') || (app.applied_position || '').includes('PR') || (app.applied_position || '').includes('Community &');
+    } else if (selectedCategoryTab === 'LEARNING') {
+      matchesCategory = (app.applied_position || '').includes('Learning') || (app.applied_position || '').includes('Projects');
+    } else if (selectedCategoryTab === 'TECH') {
+      matchesCategory = (app.applied_position || '').includes('Technology') || (app.applied_position || '').includes('Platform');
     } else if (selectedCategoryTab === 'TEAM') {
       matchesCategory = (app.applied_position || '').includes('Team Member');
     }
@@ -151,14 +156,13 @@ export default function AdminDashboard() {
     a.applied_category === 'Directorate Lead' || 
     (a.applied_position || '').startsWith('Director')
   ).length;
+  const chapterCount = applications.filter(a => 
+    (a.applied_position || '').includes('Chapter')
+  ).length;
   const teamCount = applications.filter(a => 
     a.applied_category === 'Department Team Member' || 
     (a.applied_position || '').includes('Team Member')
   ).length;
-  
-  // Unique Departments Count
-  const deptSet = new Set(applications.map(a => (a.department || '').trim()).filter(Boolean));
-  const departmentsCount = deptSet.size;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -257,7 +261,7 @@ export default function AdminDashboard() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
         
-        {/* Metric Overview Cards (NO Shortlisted/Pending metrics) */}
+        {/* Metric Overview Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Candidates</div>
@@ -274,35 +278,37 @@ export default function AdminDashboard() {
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-blue-100 shadow-xs">
             <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Directorates</div>
             <div className="text-2xl sm:text-3xl font-extrabold text-blue-900 mt-1">{directorCount}</div>
-            <div className="text-[11px] text-blue-600 mt-1">4 Lead Directorates</div>
+            <div className="text-[11px] text-blue-600 mt-1">5 Core Directorates</div>
           </div>
 
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-100 shadow-xs">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-amber-100 shadow-xs">
+            <div className="text-xs font-semibold text-amber-700 uppercase tracking-wider">First Chapter</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1">{chapterCount}</div>
+            <div className="text-[11px] text-amber-600 mt-1">Leads & Team Members</div>
+          </div>
+
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-100 shadow-xs col-span-2 sm:col-span-1">
             <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Team Members</div>
             <div className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1">{teamCount}</div>
-            <div className="text-[11px] text-emerald-600 mt-1">Department Associates</div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-indigo-100 shadow-xs col-span-2 sm:col-span-1">
-            <div className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Departments</div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-indigo-900 mt-1">{departmentsCount}</div>
-            <div className="text-[11px] text-indigo-600 mt-1">Diverse PAF-IAST fields</div>
+            <div className="text-[11px] text-emerald-600 mt-1">All Functional Wings</div>
           </div>
         </div>
 
         {/* Search, Semester & Direct Category Tabs (Dedicated quick filters) */}
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           
-          {/* Quick Domain Filter Tabs: Media, PR, Event, Decor, etc. */}
+          {/* Quick Domain Filter Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs font-semibold">
             {[
               { id: 'ALL', label: 'All Candidates' },
               { id: 'EXECUTIVE', label: 'Executive Cabinet' },
-              { id: 'DIRECTORS', label: 'All Directors' },
-              { id: 'MEDIA', label: 'Media & Content' },
-              { id: 'PR', label: 'Public Relations (PR)' },
+              { id: 'DIRECTORS', label: 'Directorates' },
+              { id: 'CHAPTER', label: 'First Chapter' },
               { id: 'EVENT', label: 'Event Management' },
-              { id: 'DECOR', label: 'Decor & Arts' },
+              { id: 'MARKETING', label: 'Marketing & Comms' },
+              { id: 'PR', label: 'Community & PR' },
+              { id: 'LEARNING', label: 'Learning & Projects' },
+              { id: 'TECH', label: 'Technology & Platform' },
               { id: 'TEAM', label: 'Team Members' }
             ].map(tab => (
               <button
@@ -412,6 +418,7 @@ export default function AdminDashboard() {
                   {filteredApps.map((app, idx) => {
                     const isExec = app.applied_category === 'Executive Leadership' || app.applied_position.includes('President') || app.applied_position.includes('Secretary');
                     const isDir = app.applied_category === 'Directorate Lead' || app.applied_position.startsWith('Director');
+                    const isChapter = (app.applied_position || '').includes('Chapter');
 
                     const linkedin = app.linkedin_url || (app.portfolio_link && app.portfolio_link.includes('linkedin') ? app.portfolio_link : null);
                     const portfolio = app.portfolio_url || (app.portfolio_link && !linkedin ? app.portfolio_link : null);
@@ -438,9 +445,12 @@ export default function AdminDashboard() {
                               ? "bg-purple-50 text-purple-700 border border-purple-200" 
                               : isDir 
                               ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                              : isChapter
+                              ? "bg-amber-50 text-amber-800 border border-amber-200"
                               : "bg-slate-100 text-slate-700 border border-slate-200"
                           )}>
                             {isExec && <Crown className="w-3 h-3" />}
+                            {isChapter && <Sparkles className="w-3 h-3 text-amber-600" />}
                             {app.applied_position}
                           </span>
                         </td>
