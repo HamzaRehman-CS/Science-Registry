@@ -4,6 +4,7 @@ import {
   deleteApplication, 
   clearAdminSession,
   getLocalApplications,
+  syncLocalApplicationsToCloud,
   type ApplicationData 
 } from '../lib/applications';
 import { 
@@ -57,8 +58,12 @@ export default function AdminDashboard() {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
+    try {
+      await syncLocalApplicationsToCloud();
+    } catch (e) {}
     const res = await fetchAllApplications();
-    if (res.applications && res.applications.length > 0) {
+    if (res.applications) {
       setApplications(res.applications);
     }
     setLoading(false);
@@ -200,6 +205,12 @@ export default function AdminDashboard() {
 
           {/* Action Buttons */}
           <div className="flex items-center flex-wrap gap-2.5">
+
+            {/* Cloud DB Status */}
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Cloud DB Connected</span>
+            </span>
             
             {/* View Form Link */}
             <Link

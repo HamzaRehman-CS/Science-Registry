@@ -185,36 +185,83 @@ export async function submitApplication(data: Partial<ApplicationData>): Promise
       console.warn('Multi-device API sync offline or pending:', apiErr);
     }
 
-    // Attempt to save to Supabase asynchronously with a short timeout
+    // Save to Supabase (primary cloud database)
     try {
       const combinedDept = newApp.degree_program 
         ? `${newApp.department} - ${newApp.degree_program}` 
         : newApp.department;
 
-      await Promise.race([
-        supabase.from('applications').insert([
-          {
-            applicant_name: newApp.applicant_name,
-            registration_number: newApp.registration_number,
-            department: combinedDept,
-            semester: newApp.semester,
-            applied_position: newApp.applied_position,
-            answers: {
-              ...newApp,
-              society: 'PAF-IAST Data Science Community'
-            }
+      const { error: sbError } = await supabase.from('applications').insert([
+        {
+          applicant_name: newApp.applicant_name,
+          registration_number: newApp.registration_number,
+          department: combinedDept,
+          semester: newApp.semester,
+          applied_position: newApp.applied_position,
+          answers: {
+            ...newApp,
+            society: 'PAF-IAST Data Science Community'
           }
-        ]),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase insert timeout')), 2500))
+        }
       ]);
+
+      if (sbError) {
+        console.warn('Supabase insert note:', sbError);
+      }
     } catch (dbErr) {
-      console.warn('Supabase insert skipped or offline (saved to local vault):', dbErr);
+      console.warn('Supabase insert skipped or offline:', dbErr);
     }
 
     return { success: true };
   } catch (err: any) {
     console.error('submitApplication error:', err);
     return { success: false, error: err.message || 'Failed to submit application.' };
+  }
+}
+
+// Auto-sync any unsynced local applications from phone/browser cache to Supabase
+export async function syncLocalApplicationsToCloud(): Promise<{ synced: number; error?: string }> {
+  try {
+    const local = getLocalApplications();
+    if (!local || local.length === 0) return { synced: 0 };
+
+    let count = 0;
+    for (const app of local) {
+      if (!app.registration_number || app.id?.startsWith('dsc-seed-')) continue;
+      const cleanReg = app.registration_number.trim().toLowerCase();
+
+      try {
+        const { data: existing } = await supabase
+          .from('applications')
+          .select('id')
+          .ilike('registration_number', cleanReg)
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          const combinedDept = app.degree_program 
+            ? `${app.department} - ${app.degree_program}` 
+            : app.department;
+
+          const { error } = await supabase.from('applications').insert([
+            {
+              applicant_name: app.applicant_name,
+              registration_number: app.registration_number,
+              department: combinedDept,
+              semester: app.semester,
+              applied_position: app.applied_position,
+              answers: {
+                ...app,
+                society: 'PAF-IAST Data Science Community'
+              }
+            }
+          ]);
+          if (!error) count++;
+        }
+      } catch (e) {}
+    }
+    return { synced: count };
+  } catch (err: any) {
+    return { synced: 0, error: err.message };
   }
 }
 
@@ -250,7 +297,7 @@ export async function fetchAllApplications(): Promise<{ applications: Applicatio
       // Local API unavailable or offline
     }
 
-    // 3. Optional Supabase fetch with 1200ms timeout
+    // 3. Cloud Supabase fetch with 8000ms timeout
     try {
       const fetchPromise = supabase
         .from('applications')
@@ -258,7 +305,7 @@ export async function fetchAllApplications(): Promise<{ applications: Applicatio
         .order('created_at', { ascending: false });
 
       const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Supabase fetch timeout') }), 1200)
+        setTimeout(() => resolve({ data: null, error: new Error('Supabase fetch timeout') }), 8000)
       );
 
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);

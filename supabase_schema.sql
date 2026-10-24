@@ -70,41 +70,41 @@ CREATE INDEX IF NOT EXISTS idx_applications_created ON applications (created_at 
 -- 2. Row Level Security (RLS) Setup
 -- ====================================================================
 
-ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+-- Recommended: Disable RLS so Admin Portal can instantly view all applications across devices
+ALTER TABLE applications DISABLE ROW LEVEL SECURITY;
 
--- Allow public applicants to submit registration forms
+-- Or if you keep RLS enabled, these public policies ensure admin and applicant access:
 DROP POLICY IF EXISTS "Allow public to submit application" ON applications;
 CREATE POLICY "Allow public to submit application" ON applications
     FOR INSERT 
     TO public
     WITH CHECK (true);
 
--- Allow authenticated admin users to read all applications
 DROP POLICY IF EXISTS "Allow authenticated admin to read applications" ON applications;
-CREATE POLICY "Allow authenticated admin to read applications" ON applications
+DROP POLICY IF EXISTS "Allow public to read applications" ON applications;
+CREATE POLICY "Allow public to read applications" ON applications
     FOR SELECT 
-    TO authenticated
+    TO public
     USING (true);
 
--- Allow authenticated admin users to update candidate status & notes
 DROP POLICY IF EXISTS "Allow authenticated admin to update applications" ON applications;
-CREATE POLICY "Allow authenticated admin to update applications" ON applications
+DROP POLICY IF EXISTS "Allow public to update applications" ON applications;
+CREATE POLICY "Allow public to update applications" ON applications
     FOR UPDATE 
-    TO authenticated
+    TO public
     USING (true);
 
--- Allow authenticated admin users to delete applications
 DROP POLICY IF EXISTS "Allow authenticated admin to delete applications" ON applications;
-CREATE POLICY "Allow authenticated admin to delete applications" ON applications
+DROP POLICY IF EXISTS "Allow public to delete applications" ON applications;
+CREATE POLICY "Allow public to delete applications" ON applications
     FOR DELETE 
-    TO authenticated
+    TO public
     USING (true);
 
 -- ====================================================================
 -- 3. Admin Credentials Configuration
 -- ====================================================================
--- Admin ID: dec26
--- Password: registry
--- (In Supabase Auth, you can register user: dec26@society.com with password: registry)
--- The portal automatically authenticates both client-side and via Supabase Auth.
+-- Admin ID: dsc26
+-- Password: register
 -- ====================================================================
+

@@ -18,7 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import clsx from 'clsx';
-import { submitApplication } from '../lib/applications';
+import { submitApplication, syncLocalApplicationsToCloud } from '../lib/applications';
 
 
 
@@ -105,7 +105,7 @@ export default function ApplicationForm() {
   const [submittedData, setSubmittedData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load saved draft on mount
+  // Load saved draft on mount & auto-sync unsynced applications to cloud
   useEffect(() => {
     try {
       const draft = localStorage.getItem('dsc_form_draft_v3');
@@ -115,6 +115,8 @@ export default function ApplicationForm() {
     } catch (e) {
       console.warn('Failed to load draft:', e);
     }
+    // Background auto-sync of any previous submission on this device
+    syncLocalApplicationsToCloud().catch(() => {});
   }, []);
 
   const handleChange = (name: string, value: any) => {
