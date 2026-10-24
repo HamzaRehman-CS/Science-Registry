@@ -186,31 +186,33 @@ export async function submitApplication(data: Partial<ApplicationData>): Promise
     }
 
     // Save to Supabase (primary cloud database)
-    try {
-      const combinedDept = newApp.degree_program 
-        ? `${newApp.department} - ${newApp.degree_program}` 
-        : newApp.department;
+    const combinedDept = newApp.degree_program 
+      ? `${newApp.department} - ${newApp.degree_program}` 
+      : newApp.department;
 
-      const { error: sbError } = await supabase.from('applications').insert([
-        {
-          applicant_name: newApp.applicant_name,
-          registration_number: newApp.registration_number,
-          department: combinedDept,
-          semester: newApp.semester,
-          applied_position: newApp.applied_position,
-          answers: {
-            ...newApp,
-            society: 'PAF-IAST Data Science Community'
-          }
+    const { error: sbError } = await supabase.from('applications').insert([
+      {
+        applicant_name: newApp.applicant_name,
+        registration_number: newApp.registration_number,
+        department: combinedDept,
+        semester: newApp.semester,
+        applied_position: newApp.applied_position,
+        answers: {
+          ...newApp,
+          society: 'PAF-IAST Data Science Community'
         }
-      ]);
-
-      if (sbError) {
-        console.warn('Supabase insert note:', sbError);
       }
-    } catch (dbErr) {
-      console.warn('Supabase insert skipped or offline:', dbErr);
+    ]);
+
+    if (sbError) {
+      console.error('Supabase insert failed:', sbError);
+      return { success: false, error: 'Database submission failed: ' + sbError.message };
     }
+
+    // Clean form draft from local storage upon successful cloud submission
+    try {
+      localStorage.removeItem('dsc_form_draft_v3');
+    } catch (e) {}
 
     return { success: true };
   } catch (err: any) {
@@ -219,158 +221,79 @@ export async function submitApplication(data: Partial<ApplicationData>): Promise
   }
 }
 
-// Auto-sync any unsynced local applications from phone/browser cache to Supabase
-export async function syncLocalApplicationsToCloud(): Promise<{ synced: number; error?: string }> {
-  try {
-    const local = getLocalApplications();
-    if (!local || local.length === 0) return { synced: 0 };
-
-    let count = 0;
-    for (const app of local) {
-      if (!app.registration_number || app.id?.startsWith('dsc-seed-')) continue;
-      const cleanReg = app.registration_number.trim().toLowerCase();
-
-      try {
-        const { data: existing } = await supabase
-          .from('applications')
-          .select('id')
-          .ilike('registration_number', cleanReg)
-          .limit(1);
-
-        if (!existing || existing.length === 0) {
-          const combinedDept = app.degree_program 
-            ? `${app.department} - ${app.degree_program}` 
-            : app.department;
-
-          const { error } = await supabase.from('applications').insert([
-            {
-              applicant_name: app.applicant_name,
-              registration_number: app.registration_number,
-              department: combinedDept,
-              semester: app.semester,
-              applied_position: app.applied_position,
-              answers: {
-                ...app,
-                society: 'PAF-IAST Data Science Community'
-              }
-            }
-          ]);
-          if (!error) count++;
-        }
-      } catch (e) {}
-    }
-    return { synced: count };
-  } catch (err: any) {
-    return { synced: 0, error: err.message };
-  }
-}
-
-// Fetch all applications with optimal DSA Hash-Map merging and multi-device disk sync
+// Fetch all applications directly from Supabase (single authoritative source of truth across all devices)
 export async function fetchAllApplications(): Promise<{ applications: ApplicationData[]; error?: string }> {
   try {
-    const localList = getLocalApplications();
-    const regMap = new Map<string, ApplicationData>();
+    // Clear out old obsolete local browser caches to ensure all devices match Supabase exactly
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem('dsc_applications_v2');
+      localStorage.removeItem('dsc_applications_vault_v1');
+      localStorage.removeItem('dsc_applications');
+    } catch (e) {}
 
-    // 1. Seed with local browser cache
-    localList.forEach(app => {
-      const key = (app.registration_number || '').trim().toLowerCase();
-      if (key && !app.id?.startsWith('dsc-seed-')) {
-        regMap.set(key, app);
-      }
+    // Cloud Supabase query
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      return { applications: [], error: error.message };
+    }
+
+    if (!data || data.length === 0) {
+      return { applications: [] };
+    }
+
+    const applications: ApplicationData[] = data.map((item: any) => {
+      const ans = item.answers || {};
+      return {
+        id: item.id || `app-${item.registration_number}`,
+        created_at: item.created_at || new Date().toISOString(),
+        applicant_name: item.applicant_name || ans.applicant_name || '',
+        registration_number: item.registration_number || ans.registration_number || '',
+        personal_email: ans.personal_email || ans['Personal Email Address'] || '',
+        phone_number: ans.phone_number || ans['Phone Number / WhatsApp'] || '',
+        department: ans.department || item.department || '',
+        degree_program: ans.degree_program || ans['Degree / Program'] || '',
+        semester: item.semester || ans.semester || ans['Semester'] || '',
+        gender: ans.gender || ans['What gender do you identify as?'] || '',
+        date_of_birth: ans.date_of_birth || ans['Date of birth'] || '',
+        applied_category: ans.applied_category || 'General',
+        applied_position: item.applied_position || ans.applied_position || '',
+        second_choice_position: ans.second_choice_position || ans['What is your second-choice position?'] || '',
+        skill_level: ans.skill_level || ans['What is your current skill level in this domain?'] || 'Beginner',
+        motivation_join: ans.motivation_join || ans['Why do you want to join the PAF-IAST Data Science Community?'] || '',
+        motivation_drive: ans.motivation_drive || ans['What is your biggest personal motivation to contribute?'] || '',
+        can_participate_competitions: ans.can_participate_competitions || 'Yes',
+        can_travel: ans.can_travel || 'Yes',
+        willing_commit_deadlines: ans.willing_commit_deadlines || 'Yes',
+        is_member_other_society: ans.is_member_other_society || 'No',
+        other_society_details: ans.other_society_details || '',
+        detailed_prior_experience: ans.detailed_prior_experience || ans['Detailed prior experience related to this position/team:'] || '',
+        certifications: ans.certifications || ans['Certifications & specialized training (if any):'] || '',
+        awards_competitions: ans.awards_competitions || ans['Awards, honors & competition wins (if any):'] || '',
+        previous_achievements: ans.previous_achievements || ans['Notable projects & extracurricular achievements:'] || '',
+        awards_certificates: ans.awards_certificates || '',
+        linkedin_url: ans.linkedin_url || ans['LinkedIn Profile URL:'] || '',
+        portfolio_url: ans.portfolio_url || ans['Portfolio / Website / Work Showcase Link:'] || '',
+        github_url: ans.github_url || ans['GitHub Profile Link:'] || '',
+        portfolio_link: ans.portfolio_link || ans.portfolio_url || ans.linkedin_url || '',
+        additional_info: ans.additional_info || ans['Is there anything else you\'d like us to know about you?'] || '',
+        role_specific_answers: ans.role_specific_answers || {},
+        status: ans.status || 'Registered',
+        admin_notes: ans.admin_notes || '',
+        answers: ans
+      };
     });
 
-    // 2. Sync from Multi-Device API Vault (data/applications.json on host)
-    try {
-      const apiRes = await fetch('/api/applications');
-      if (apiRes.ok) {
-        const diskApps: ApplicationData[] = await apiRes.json();
-        if (Array.isArray(diskApps)) {
-          diskApps.forEach(app => {
-            const key = (app.registration_number || '').trim().toLowerCase();
-            if (key && !app.id?.startsWith('dsc-seed-')) {
-              regMap.set(key, app);
-            }
-          });
-        }
-      }
-    } catch (e) {
-      // Local API unavailable or offline
-    }
-
-    // 3. Cloud Supabase fetch with 8000ms timeout
-    try {
-      const fetchPromise = supabase
-        .from('applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Supabase fetch timeout') }), 8000)
-      );
-
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
-
-      if (!error && data && data.length > 0) {
-        data.forEach((item: any) => {
-          const ans = item.answers || {};
-          const mapped: ApplicationData = {
-            id: item.id || `app-${item.registration_number}`,
-            created_at: item.created_at || new Date().toISOString(),
-            applicant_name: item.applicant_name || ans.applicant_name || '',
-            registration_number: item.registration_number || ans.registration_number || '',
-            personal_email: ans.personal_email || ans['Personal Email Address'] || '',
-            phone_number: ans.phone_number || ans['Phone Number / WhatsApp'] || '',
-            department: ans.department || item.department || '',
-            degree_program: ans.degree_program || ans['Degree / Program'] || '',
-            semester: item.semester || ans.semester || ans['Semester'] || '',
-            gender: ans.gender || ans['What gender do you identify as?'] || '',
-            date_of_birth: ans.date_of_birth || ans['Date of birth'] || '',
-            applied_category: ans.applied_category || 'General',
-            applied_position: item.applied_position || ans.applied_position || '',
-            second_choice_position: ans.second_choice_position || ans['What is your second-choice position?'] || '',
-            skill_level: ans.skill_level || ans['What is your current skill level in this domain?'] || 'Beginner',
-            motivation_join: ans.motivation_join || ans['Why do you want to join the PAF-IAST Data Science Community?'] || '',
-            motivation_drive: ans.motivation_drive || ans['What is your biggest personal motivation to contribute?'] || '',
-            can_participate_competitions: ans.can_participate_competitions || 'Yes',
-            can_travel: ans.can_travel || 'Yes',
-            willing_commit_deadlines: ans.willing_commit_deadlines || 'Yes',
-            is_member_other_society: ans.is_member_other_society || 'No',
-            other_society_details: ans.other_society_details || '',
-            detailed_prior_experience: ans.detailed_prior_experience || ans['Detailed prior experience related to this position/team:'] || '',
-            certifications: ans.certifications || ans['Certifications & specialized training (if any):'] || '',
-            awards_competitions: ans.awards_competitions || ans['Awards, honors & competition wins (if any):'] || '',
-            previous_achievements: ans.previous_achievements || ans['Notable projects & extracurricular achievements:'] || '',
-            awards_certificates: ans.awards_certificates || '',
-            linkedin_url: ans.linkedin_url || ans['LinkedIn Profile URL:'] || '',
-            portfolio_url: ans.portfolio_url || ans['Portfolio / Website / Work Showcase Link:'] || '',
-            github_url: ans.github_url || ans['GitHub Profile Link:'] || '',
-            portfolio_link: ans.portfolio_link || ans.portfolio_url || ans.linkedin_url || '',
-            additional_info: ans.additional_info || ans['Is there anything else you\'d like us to know about you?'] || '',
-            role_specific_answers: ans.role_specific_answers || {},
-            status: ans.status || 'Registered',
-            admin_notes: ans.admin_notes || '',
-            answers: ans
-          };
-          const key = (mapped.registration_number || '').trim().toLowerCase();
-          if (key && !regMap.has(key) && !mapped.id?.startsWith('dsc-seed-')) {
-            regMap.set(key, mapped);
-          }
-        });
-      }
-    } catch (e) {
-      // Supabase timeout or error: gracefully ignore
-    }
-
-    const merged = Array.from(regMap.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    // Save cleaned deduplicated list back to local cache
-    saveLocalApplications(merged);
-
-    return { applications: merged };
+    const cleaned = applications.filter(app => !app.id?.startsWith('dsc-seed-'));
+    return { applications: cleaned };
   } catch (err: any) {
-    return { applications: getLocalApplications(), error: err.message };
+    console.error('fetchAllApplications error:', err);
+    return { applications: [], error: err.message };
   }
 }
 

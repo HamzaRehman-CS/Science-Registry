@@ -3,8 +3,6 @@ import {
   fetchAllApplications, 
   deleteApplication, 
   clearAdminSession,
-  getLocalApplications,
-  syncLocalApplicationsToCloud,
   type ApplicationData 
 } from '../lib/applications';
 import { 
@@ -40,9 +38,8 @@ function LinkedinIcon({ className }: { className?: string }) {
 
 
 export default function AdminDashboard() {
-  // DSA Instant Cache-first initialization: 0ms UI blocking
-  const [applications, setApplications] = useState<ApplicationData[]>(() => getLocalApplications());
-  const [loading, setLoading] = useState<boolean>(() => getLocalApplications().length === 0);
+  const [applications, setApplications] = useState<ApplicationData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('ALL');
   const [selectedSemesterFilter, setSelectedSemesterFilter] = useState('ALL');
@@ -60,7 +57,9 @@ export default function AdminDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      await syncLocalApplicationsToCloud();
+      localStorage.removeItem('dsc_applications_v3');
+      localStorage.removeItem('dsc_applications_v2');
+      localStorage.removeItem('dsc_applications_vault_v1');
     } catch (e) {}
     const res = await fetchAllApplications();
     if (res.applications) {
