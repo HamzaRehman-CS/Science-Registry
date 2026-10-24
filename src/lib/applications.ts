@@ -289,8 +289,20 @@ export async function fetchAllApplications(): Promise<{ applications: Applicatio
       };
     });
 
-    const cleaned = applications.filter(app => !app.id?.startsWith('dsc-seed-'));
-    return { applications: cleaned };
+    // Strict deduplication by registration number: ensures zero duplicates or repetitions in Admin Portal
+    const seenRegs = new Set<string>();
+    const deduplicated: ApplicationData[] = [];
+
+    for (const app of applications) {
+      if (!app.registration_number || app.id?.startsWith('dsc-seed-')) continue;
+      const key = app.registration_number.trim().toLowerCase();
+      if (!seenRegs.has(key)) {
+        seenRegs.add(key);
+        deduplicated.push(app);
+      }
+    }
+
+    return { applications: deduplicated };
   } catch (err: any) {
     console.error('fetchAllApplications error:', err);
     return { applications: [], error: err.message };
@@ -304,31 +316,26 @@ export async function updateApplicationStatus(
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const list = getLocalApplications();
-    const updated = list.map(app => {
-      if (app.id === id) {
-        return {
-          ...app,
-          status,
-          admin_notes: notes !== undefined ? notes : app.admin_notes
-        };
-      }
-      return app;
-    });
-    saveLocalApplications(updated);
-
-    // Try Supabase update if ID is UUID
     try {
+      const { data: current } = await supabase
+        .from('applications')
+        .select('answers')
+        .eq('id', id)
+        .maybeSingle();
+
+      const mergedAnswers = {
+        ...(current?.answers || {}),
+        status,
+        ...(notes !== undefined ? { admin_notes: notes } : {})
+      };
+
       await supabase
         .from('applications')
-        .update({
-          answers: {
-            status,
-            admin_notes: notes
-          }
-        })
+        .update({ answers: mergedAnswers })
         .eq('id', id);
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Supabase update status note:', e);
+    }
 
     return { success: true };
   } catch (err: any) {
