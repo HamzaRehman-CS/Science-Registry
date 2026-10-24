@@ -20,13 +20,6 @@ import {
 import clsx from 'clsx';
 import { submitApplication } from '../lib/applications';
 
-function LinkedinIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v7.6h2.79v-7.6H6.46M7.86 6.5a1.63 1.63 0 0 0-1.63 1.62c0 .9.73 1.63 1.63 1.63.9 0 1.63-.73 1.63-1.63A1.63 1.63 0 0 0 7.86 6.5Z" />
-    </svg>
-  );
-}
 
 
 interface ExecutivePosition {
@@ -101,7 +94,7 @@ const FORM_STEPS = [
   { num: 1, title: "Personal Details", subtitle: "Identity & Academic Profile" },
   { num: 2, title: "Position & Experience", subtitle: "Role Choice & Background" },
   { num: 3, title: "Motivation & Availability", subtitle: "Commitment & Societies" },
-  { num: 4, title: "Specialization & Links", subtitle: "Domain Qs & Profiles" }
+  { num: 4, title: "Role Specialization", subtitle: "Domain Qs & Consent" }
 ];
 
 export default function ApplicationForm() {
@@ -247,18 +240,6 @@ export default function ApplicationForm() {
     if (!formData['Consent Declaration: I agree to the recruitment terms and consent to evaluation.'] ||
         formData['Consent Declaration: I agree to the recruitment terms and consent to evaluation.'] !== 'I Agree & Consent') {
       setError("Please agree to the recruitment terms and evaluation consent to proceed.");
-      setSubmitting(false);
-      window.scrollTo({ top: 240, behavior: 'smooth' });
-      return;
-    }
-
-    // Role-specific check if fields exist
-    const isExec = selectedPosition === 'Vice President Female';
-    const isDirector = selectedPosition && selectedPosition.startsWith('Director');
-
-    // Portfolio link requirement for Exec & Directors (recommended for leadership evaluation)
-    if ((isExec || isDirector) && !formData['Portfolio / Website / Work Showcase Link:']?.trim() && !formData['LinkedIn Profile URL:']?.trim()) {
-      setError("Please provide your LinkedIn profile or Portfolio / Work Showcase link for leadership consideration.");
       setSubmitting(false);
       window.scrollTo({ top: 240, behavior: 'smooth' });
       return;
@@ -929,44 +910,6 @@ export default function ApplicationForm() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              {/* Professional Links Card (LinkedIn for all, Portfolio for Exec & Directors, GitHub for tech) */}
-              <Section 
-                title="Professional Profiles & Portfolios" 
-                icon={Globe} 
-                subtitle="Share your online profiles and project links"
-              >
-                <div className="space-y-4">
-                  {/* LinkedIn Profile */}
-                  <div>
-                    <label className="block text-[13px] font-semibold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                      <LinkedinIcon className="w-4 h-4 text-blue-600" />
-                      <span>LinkedIn Profile URL <span className="text-slate-400 font-normal text-xs">(Optional for team members)</span></span>
-                    </label>
-                    <input
-                      type="url"
-                      value={formData['LinkedIn Profile URL:'] || ''}
-                      onChange={(e) => handleChange('LinkedIn Profile URL:', e.target.value)}
-                      placeholder="https://linkedin.com/in/yourname (Optional)"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-sm font-medium placeholder:text-slate-400 shadow-xs"
-                    />
-                  </div>
-
-                  {/* Portfolio Link (Optional for all candidates, simple label) */}
-                  <div>
-                    <label className="block text-[13px] font-semibold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                      <Globe className="w-4 h-4 text-purple-600" />
-                      <span>Portfolio Link <span className="text-slate-400 font-normal text-xs">(Optional)</span></span>
-                    </label>
-                    <input
-                      type="url"
-                      value={formData['Portfolio / Website / Work Showcase Link:'] || ''}
-                      onChange={(e) => handleChange('Portfolio / Website / Work Showcase Link:', e.target.value)}
-                      placeholder="https://behance.net/... or Google Drive link (Optional)"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-sm font-medium placeholder:text-slate-400 shadow-xs"
-                    />
-                  </div>
-                </div>
-              </Section>
 
               {/* Dynamic Role-Specific Questions (Clean & concise: 2 to 3 questions max per role) */}
               
@@ -1062,7 +1005,7 @@ export default function ApplicationForm() {
                     name="Describe your design, video, or content background and past work:" 
                     value={formData} 
                     onChange={handleChange} 
-                    placeholder="Tell us what kind of graphics, reels, or campaigns you enjoy creating (portfolio links can be pasted in the field above)..."
+                    placeholder="Tell us what kind of graphics, reels, or campaigns you enjoy creating..."
                     required 
                   />
 
