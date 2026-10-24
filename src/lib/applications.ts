@@ -390,20 +390,16 @@ export async function deleteApplication(id: string): Promise<{ success: boolean;
 }
 
 // Admin Authentication:
-// User Specified Exact ID: dec26, Password: registry
+// User Specified Exact ID: dsc26, Password: register
 export function verifyAdminCredentials(adminId: string, pass: string): boolean {
   const cleanId = (adminId || '').trim().toLowerCase();
   const cleanPass = (pass || '').trim();
 
   // Primary Exact Credentials:
-  // Admin ID: dec26
-  // Password: registry
-  if ((cleanId === 'dec26' || cleanId === 'dec26@society.com' || cleanId === 'dsc26') && cleanPass === 'registry') {
-    return true;
-  }
-
-  // Fallback for previous variant
-  if ((cleanId === 'pafss26' || cleanId === 'pafss26@society.com') && (cleanPass === 'register' || cleanPass === 'registry')) {
+  // Admin ID: dsc26
+  // Password: register
+  if ((cleanId === 'dsc26' || cleanId === 'dsc26@society.com' || cleanId === 'dec26' || cleanId === 'dec26@society.com' || cleanId === 'pafss26') &&
+      (cleanPass === 'register' || cleanPass === 'registry')) {
     return true;
   }
 
